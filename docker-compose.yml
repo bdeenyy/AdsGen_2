@@ -1,0 +1,176 @@
+version: '3.8'
+
+services:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # INFRASTRUCTURE
+  # ═══════════════════════════════════════════════════════════════════════════
+  
+  postgres:
+    image: postgres:16-alpine
+    container_name: adsgen_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-adsgen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-adsgen_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-adsgen}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adsgen"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: adsgen_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # MONITORING
+  # ═══════════════════════════════════════════════════════════════════════════
+  
+  flower:
+    image: mher/flower:2.0
+    container_name: adsgen_flower
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_PORT=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # API GATEWAY
+  # ═══════════════════════════════════════════════════════════════════════════
+  
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    container_name: adsgen_api
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-adsgen}:${POSTGRES_PASSWORD:-adsgen_secret}@postgres:5432/${POSTGRES_DB:-adsgen}
+      - REDIS_URL=redis://redis:6379/0
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
+      - YANDEX_DISK_TOKEN=${YANDEX_DISK_TOKEN}
+      - YANDEX_DISK_FOLDER=${YANDEX_DISK_FOLDER}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services:/app/services
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # WORKERS
+  # ═══════════════════════════════════════════════════════════════════════════
+  
+  import_worker:
+    build:
+      context: .
+      dockerfile: services/import_worker/Dockerfile
+    container_name: adsgen_import_worker
+    command: celery -A services.import_worker.tasks worker -l info -Q import -n import_worker@%h
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-adsgen}:${POSTGRES_PASSWORD:-adsgen_secret}@postgres:5432/${POSTGRES_DB:-adsgen}
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./services:/app/services
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  textgen_worker:
+    build:
+      context: .
+      dockerfile: services/textgen_worker/Dockerfile
+    container_name: adsgen_textgen_worker
+    command: celery -A services.textgen_worker.tasks worker -l info -Q textgen -n textgen_worker@%h
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-adsgen}:${POSTGRES_PASSWORD:-adsgen_secret}@postgres:5432/${POSTGRES_DB:-adsgen}
+      - REDIS_URL=redis://redis:6379/0
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    volumes:
+      - ./services:/app/services
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  imagegen_worker:
+    build:
+      context: .
+      dockerfile: services/imagegen_worker/Dockerfile
+    container_name: adsgen_imagegen_worker
+    command: celery -A services.imagegen_worker.tasks worker -l info -Q imagegen -n imagegen_worker@%h --concurrency=2
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-adsgen}:${POSTGRES_PASSWORD:-adsgen_secret}@postgres:5432/${POSTGRES_DB:-adsgen}
+      - REDIS_URL=redis://redis:6379/0
+      - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
+      - YANDEX_DISK_TOKEN=${YANDEX_DISK_TOKEN}
+      - YANDEX_DISK_FOLDER=${YANDEX_DISK_FOLDER}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    volumes:
+      - ./services:/app/services
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  validation_worker:
+    build:
+      context: .
+      dockerfile: services/validation_worker/Dockerfile
+    container_name: adsgen_validation_worker
+    command: celery -A services.validation_worker.tasks worker -l info -Q validation -n validation_worker@%h
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-adsgen}:${POSTGRES_PASSWORD:-adsgen_secret}@postgres:5432/${POSTGRES_DB:-adsgen}
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./services:/app/services
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  publisher_worker:
+    build:
+      context: .
+      dockerfile: services/publisher_worker/Dockerfile
+    container_name: adsgen_publisher_worker
+    command: celery -A services.publisher_worker.tasks worker -l info -Q publisher -n publisher_worker@%h
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-adsgen}:${POSTGRES_PASSWORD:-adsgen_secret}@postgres:5432/${POSTGRES_DB:-adsgen}
+      - REDIS_URL=redis://redis:6379/0
+      - AVITO_CLIENT_ID=${AVITO_CLIENT_ID}
+      - AVITO_CLIENT_SECRET=${AVITO_CLIENT_SECRET}
+      - YANDEX_DISK_TOKEN=${YANDEX_DISK_TOKEN}
+      - YANDEX_DISK_FOLDER=${YANDEX_DISK_FOLDER}
+    volumes:
+      - ./services:/app/services
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
