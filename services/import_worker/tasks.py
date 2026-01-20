@@ -21,6 +21,7 @@ from services.shared.mappings import (
 from services.shared.models.vacancy import Vacancy, VacancyStatus
 from services.shared.models.import_batch import ImportBatch, ImportSource, ImportStatus
 from services.shared.celery_app import celery_app
+from services.shared.utils import GoogleSheetsService
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -52,6 +53,40 @@ def process_json_import(self, data: list[dict], cities_filter: Optional[List[str
         return result
     except Exception as e:
         logger.error(f"JSON import failed: {e}")
+        self.retry(exc=e)
+
+
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
+def import_spreadsheet(
+    self, 
+    spreadsheet_input: str, 
+    sheet_name: Optional[str] = None, 
+    cities_filter: Optional[List[str]] = None,
+    column_mapping: Optional[dict] = None
+) -> dict:
+    """
+    Import vacancies from a Google Spreadsheet (by ID or URL).
+    """
+    logger.info(f"Starting Google Sheets import: {spreadsheet_input} (sheet: {sheet_name})")
+    
+    try:
+        if not settings.google_credentials_json:
+            raise ValueError("GOOGLE_CREDENTIALS_JSON not configured")
+            
+        gs_service = GoogleSheetsService(settings.google_credentials_json)
+        data = gs_service.get_sheet_data(spreadsheet_input, sheet_name)
+        
+        logger.info(f"Fetched {len(data)} rows from Google Sheets")
+        
+        df = pd.DataFrame(data)
+        result = _process_dataframe(df, ImportSource.GOOGLE_SHEETS, spreadsheet_input, cities_filter, column_mapping)
+        
+        if result["processed"] > 0:
+            start_batch_processing.delay("pending", result["processed"])
+            
+        return result
+    except Exception as e:
+        logger.error(f"Google Sheets import failed: {e}")
         self.retry(exc=e)
 
 
@@ -88,7 +123,8 @@ def _process_dataframe(
     df: pd.DataFrame,
     source_type: ImportSource,
     source_name: str,
-    cities_filter: Optional[List[str]] = None
+    cities_filter: Optional[List[str]] = None,
+    column_mapping: Optional[dict] = None
 ) -> dict:
     """
     Process a DataFrame and create Vacancy records.
@@ -99,25 +135,33 @@ def _process_dataframe(
     df.columns = [str(col).strip() for col in df.columns]
     logger.info(f"Normalized columns: {list(df.columns)}")
     
-    column_mapping = {
-        "ТК": "tk",
-        "Адрес": "address",
-        "Город": "city",
-        "Должность": "position",
-        "Уровень ЧТС": "level",
-        "График": "schedule",
-        "Описание Графика": "schedule",
-        "Описание графика": "schedule",
-        "Тип ТК": "store_type",
-        "Услуга": "service",
-        "Примечания": "notes",
-        "Комментарий": "notes",
-        "Актуальность": "relevance",
-        "Аткуальна ли вакансия?": "relevance",
-        "Актуальна ли вакансия?": "relevance",
-    }
+    if column_mapping:
+        # Use provided mapping (Source -> Internal)
+        # We must also normalize the mapping keys because we normalized df.columns above
+        normalized_mapping = {str(k).strip(): v for k, v in column_mapping.items()}
+        logger.info(f"Using provided column mapping: {column_mapping} (Normalized: {normalized_mapping})")
+        df = df.rename(columns=normalized_mapping)
+    else:
+        # Use default mapping
+        default_mapping = {
+            "ТК": "tk",
+            "Адрес": "address",
+            "Город": "city",
+            "Должность": "position",
+            "Уровень ЧТС": "level",
+            "График": "schedule",
+            "Описание Графика": "schedule",
+            "Описание графика": "schedule",
+            "Тип ТК": "store_type",
+            "Услуга": "service",
+            "Примечания": "notes",
+            "Комментарий": "notes",
+            "Актуальность": "relevance",
+            "Аткуальна ли вакансия?": "relevance",
+            "Актуальна ли вакансия?": "relevance",
+        }
+        df = df.rename(columns=default_mapping)
     
-    df = df.rename(columns=column_mapping)
     logger.info(f"Renamed columns: {list(df.columns)}")
     
     required = ["city", "position"]
@@ -189,6 +233,7 @@ def _process_dataframe(
                 errors += 1
         
         session.commit()
+        batch_id = batch.id  # Access ID while session is open
         batch.processed_rows = processed
         batch.skipped_rows = skipped
         batch.error_rows = errors
@@ -201,5 +246,5 @@ def _process_dataframe(
         "skipped": skipped,
         "errors": errors,
         "total": len(df),
-        "batch_id": batch.id,
+        "batch_id": batch_id,
     }

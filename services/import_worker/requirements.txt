@@ -16,3 +16,5 @@ pandas==2.1.4
 # Utilities
 python-dotenv==1.0.0
 httpx==0.26.0
+gspread==6.0.2
+google-auth==2.27.0

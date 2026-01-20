@@ -65,3 +65,4 @@ dmypy.json
 # Project specific
 monitor_vacancies.sql
 test_vacancy.json
+credentials.json

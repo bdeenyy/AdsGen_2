@@ -6,7 +6,7 @@ Main FastAPI application for the AdsGen platform
 from contextlib import asynccontextmanager
 from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends, Body, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -22,6 +22,7 @@ from services.shared.schemas.vacancy import (
     VacancyResponse,
     VacancyListResponse,
 )
+from services.shared.utils import GoogleSheetsService
 
 settings = get_settings()
 templates = Jinja2Templates(directory="services/api/templates")
@@ -77,7 +78,10 @@ async def root(request: Request):
 # ═══════════════════════════════════════════════════════════════════════════
 
 @app.post("/import/json", response_model=TaskResponse)
-async def import_json(data: list[dict], cities: list[str] = None):
+async def import_json(
+    data: list[dict] = Body(...),
+    cities: Optional[list[str]] = Query(None)
+):
     """Import vacancies directly as JSON data."""
     from services.shared.celery_app import celery_app
     task = celery_app.send_task(
@@ -89,6 +93,61 @@ async def import_json(data: list[dict], cities: list[str] = None):
         task_id=task.id,
         status="pending",
         message=f"JSON import started for {len(data)} rows",
+    )
+
+
+
+@app.post("/google/sheets/meta")
+async def get_sheet_meta(url: str = Body(..., embed=True)):
+    """Get list of sheets from a Google Spreadsheet."""
+    if not settings.google_credentials_json:
+        raise HTTPException(status_code=500, detail="Google credentials not configured")
+        
+    try:
+        gs_service = GoogleSheetsService(settings.google_credentials_json)
+        sheets = gs_service.get_sheet_names(url)
+        return {"sheets": sheets}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/google/sheets/headers")
+async def get_sheet_headers(
+    url: str = Body(..., embed=True),
+    sheet_name: str = Body(..., embed=True)
+):
+    """Get headers from a specific sheet."""
+    if not settings.google_credentials_json:
+        raise HTTPException(status_code=500, detail="Google credentials not configured")
+        
+    try:
+        gs_service = GoogleSheetsService(settings.google_credentials_json)
+        headers = gs_service.get_sheet_headers(url, sheet_name)
+        return {"headers": headers}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/import/sheets", response_model=TaskResponse)
+async def import_sheets(
+    spreadsheet_input: str = Body(..., description="Spreadsheet ID or URL"),
+    sheet_name: Optional[str] = Body(None),
+    cities: Optional[list[str]] = Body(None),
+    column_mapping: Optional[dict] = Body(None)
+):
+    """
+    Import vacancies from Google Sheets.
+    """
+    from services.shared.celery_app import celery_app
+    task = celery_app.send_task(
+        "services.import_worker.tasks.import_spreadsheet",
+        args=[spreadsheet_input, sheet_name, cities, column_mapping]
+    )
+    
+    return TaskResponse(
+        task_id=task.id,
+        status="pending",
+        message=f"Google Sheets import started for {spreadsheet_input}",
     )
 
 

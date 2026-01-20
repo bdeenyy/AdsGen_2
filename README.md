@@ -109,11 +109,26 @@ services/
 # Запуск только инфраструктуры
 docker-compose up -d postgres redis flower
 
+## Перезапуск
+
+docker-compose down && docker-compose build --no-cache && docker-compose up -d
+
+
+# Проверить статус задач в Flower UI
+open http://localhost:5555
+
+# API docs
+http://localhost:8000/docs
+
 # Локальный запуск API
 cd services/api
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
+
+# Проверка логов
+
+docker logs adsgen_import_worker --tail 100
 
 ## 📄 Лицензия
 

@@ -42,7 +42,7 @@ class Vacancy(Base):
     address: Mapped[str] = mapped_column(String(500))
     position: Mapped[str] = mapped_column(String(200))  # Original position name
     profession: Mapped[str] = mapped_column(String(200), index=True)  # Mapped Avito profession
-    schedule: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    schedule: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     level: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # ЧТС уровень
     store_type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # ГМ/МФ
     service: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)  # Услуга

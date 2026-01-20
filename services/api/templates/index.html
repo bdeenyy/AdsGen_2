@@ -4,365 +4,791 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AdsGen 2.0 - Панель управления</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <title>AdsGen 2.0 - Control Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #0071e3;
-            --bg: #f5f5f7;
-            --card: #ffffff;
-            --text: #1d1d1f;
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --error: #ef4444;
+            --glass: rgba(30, 41, 59, 0.7);
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s ease;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Outfit', sans-serif;
             background-color: var(--bg);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
             color: var(--text);
             margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
         }
 
         .container {
-            background: var(--card);
-            padding: 2.5rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 500px;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            padding: 2rem;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            height: fit-content;
+        }
+
+        h1,
+        h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         h1 {
-            margin-bottom: 1.5rem;
-            font-size: 24px;
-            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
         }
 
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 1.5rem;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            border-radius: 10px;
-            border: none;
-            background: #e5e5ea;
-            color: #1d1d1f;
-            cursor: pointer;
+        h2 {
+            font-size: 20px;
             font-weight: 600;
-            transition: all 0.2s;
         }
 
-        .tab-btn.active {
-            background: var(--primary);
-            color: white;
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
         }
 
         .form-group {
             margin-bottom: 1.2rem;
         }
 
+        .form-group.full {
+            grid-column: span 2;
+        }
+
         label {
             display: block;
             margin-bottom: 0.5rem;
-            font-weight: 600;
+            font-weight: 500;
             font-size: 14px;
+            color: var(--text-muted);
         }
 
-        input {
+        input,
+        select,
+        textarea {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #d2d2d7;
-            border-radius: 10px;
-            font-size: 16px;
-            box-sizing: border-box;
+            padding: 12px 16px;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 15px;
+            font-family: inherit;
             outline: none;
         }
 
-        input:focus {
+        input:focus,
+        select:focus,
+        textarea:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
         }
 
         button {
             width: 100%;
             padding: 14px;
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         button:hover {
-            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
         }
 
-        .status {
-            margin-top: 1.5rem;
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .status-processing {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+        }
+
+        .status-completed {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-failed {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .vacancy-list {
+            margin-top: 1rem;
+            max-height: 600px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .vacancy-item {
             padding: 1rem;
-            border-radius: 10px;
-            display: none;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .vacancy-item:last-child {
+            border-bottom: none;
+        }
+
+        .vacancy-info h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .vacancy-info p {
+            margin: 4px 0 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        #statusOutput {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
             font-size: 14px;
+            display: none;
         }
 
-        .status.success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            display: block;
+        .output-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            display: block !important;
         }
 
-        .status.error {
-            background: #ffebee;
-            color: #c62828;
-            display: block;
+        .output-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            display: block !important;
         }
 
         .links {
             margin-top: 2rem;
-            text-align: center;
-            font-size: 13px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            font-size: 14px;
         }
 
         .links a {
-            color: var(--primary);
+            color: var(--text-muted);
             text-decoration: none;
-            margin: 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .links a:hover {
+            color: var(--primary);
+        }
+
+        /* Loader Animation */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        button.loading .spinner {
+            display: block;
+        }
+
+        button.loading .btn-text {
+            display: none;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>AdsGen 2.0 🚀</h1>
+        <!-- Left Column: Form -->
+        <div class="panel">
+            <h1>AdsGen 2.0 🚀</h1>
+            <h2>Ручной импорт для теста</h2>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('google')">Google Sheets</button>
-            <button class="tab-btn" onclick="switchTab('excel')">Excel File</button>
-        </div>
+            <h1>AdsGen 2.0 🚀</h1>
 
-        <div id="googleSection">
-            <div class="form-group">
-                <label>Ссылка на Google Таблицу</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
-                    <button onclick="fetchGoogleMetadata()" id="fetchGoogleBtn"
-                        style="width: auto; padding: 10px 15px;">🔍</button>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('sheets')">Google Sheets Import</button>
+                <button class="tab-btn" onclick="switchTab('manual')">Manual Import</button>
+            </div>
+
+            <style>
+                .tabs {
+                    display: flex;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                }
+
+                .tab-btn {
+                    background: transparent;
+                    border: 1px solid var(--border);
+                    color: var(--text-muted);
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    width: auto;
+                }
+
+                .tab-btn.active {
+                    background: var(--primary);
+                    color: white;
+                    border-color: var(--primary);
+                }
+
+                .step-section {
+                    border: 1px solid var(--border);
+                    padding: 15px;
+                    border-radius: 12px;
+                    margin-bottom: 15px;
+                    background: rgba(0, 0, 0, 0.2);
+                }
+
+                .mapping-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 8px;
+                }
+
+                .mapping-label {
+                    flex: 1;
+                    font-size: 14px;
+                    color: var(--text-muted);
+                }
+
+                .mapping-select {
+                    flex: 2;
+                }
+
+                .hidden {
+                    display: none;
+                }
+            </style>
+
+            <!-- GOOGLE SHEETS FORM -->
+            <div id="sheetsPanel">
+                <div class="step-section">
+                    <label>1. Google Sheet URL / ID</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..."
+                            value="">
+                        <button onclick="loadSheets()" id="loadSheetsBtn" style="width: auto;">Load</button>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div id="excelSection" style="display: none;">
-            <div class="form-group">
-                <label>Выбрать Excel файл (.xlsx, .xls)</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="fetchExcelMetadata()">
-                    <button onclick="fetchExcelMetadata()" id="fetchExcelBtn"
-                        style="width: auto; padding: 10px 15px;">🔍</button>
+                <div id="step2" class="step-section hidden">
+                    <label>2. Select Sheet</label>
+                    <select id="sheetSelect" onchange="loadHeaders()">
+                        <option value="">Select a sheet...</option>
+                    </select>
                 </div>
-            </div>
-        </div>
 
-        <div id="metadataPanel" style="display: none; border-top: 1px solid #eee; padding-top: 1rem; margin-top: 1rem;">
-            <div class="form-group">
-                <label>Выберите лист</label>
-                <select id="sheetSelect"
-                    style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #d2d2d7;"></select>
-            </div>
+                <div id="step3" class="step-section hidden">
+                    <label>3. Map Columns</label>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Match internal fields to
+                        your sheet columns.</p>
 
-            <div class="form-group">
-                <label>Фильтр по городам</label>
-                <div id="citiesList"
-                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 13px; max-height: 150px; overflow-y: auto; padding: 10px; border: 1px solid #eee; border-radius: 10px;">
+                    <div id="mappingContainer">
+                        <!-- Mapping rows will be injected here -->
+                    </div>
                 </div>
+
+                <button id="importSheetsBtn" onclick="startSheetImport()" class="hidden">
+                    <div class="spinner"></div>
+                    <span class="btn-text">🚀 Start Import</span>
+                </button>
             </div>
 
-            <button onclick="startImport()" id="importBtn">🚀 Запустить импорт</button>
+            <!-- MANUAL FORM -->
+            <form id="importForm" class="hidden">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Должность / Профессия</label>
+                        <input type="text" id="position" placeholder="Например: Продавец-кассир">
+                    </div>
+
+                    <div class="form-group">
+                        <label>ID вакансии (уникальный)</label>
+                        <input type="text" id="vacancyId" placeholder="M123456">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Город</label>
+                        <input type="text" id="city" placeholder="Москва">
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Адрес</label>
+                        <input type="text" id="address" placeholder="ул. Ленина, д. 1">
+                    </div>
+
+                    <div class="form-group">
+                        <label>График</label>
+                        <select id="schedule">
+                            <option value="2/2">2/2</option>
+                            <option value="5/2">5/2</option>
+                            <option value="Сменный">Сменный</option>
+                            <option value="Гибкий">Гибкий</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Уровень</label>
+                        <select id="level">
+                            <option value="Без опыта">Без опыта</option>
+                            <option value="Начинающий">Начинающий</option>
+                            <option value="Специалист">Специалист</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Зарплата ОТ</label>
+                        <input type="number" id="salaryMin" placeholder="45000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Зарплата ДО</label>
+                        <input type="number" id="salaryMax" placeholder="60000">
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Доп. примечания</label>
+                        <textarea id="notes" rows="3" placeholder="Особенности..."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn">
+                    <div class="spinner"></div>
+                    <span class="btn-text">🚀 Запустить импорт</span>
+                </button>
+            </form>
+
+            <div id="statusOutput"></div>
+
+            <div class="quick-actions">
+                <button class="btn-secondary" onclick="startBatch()">
+                    <span>📦 Batch Process All</span>
+                </button>
+                <button class="btn-secondary" onclick="exportXml()">
+                    <span>📄 Export XML</span>
+                </button>
+            </div>
         </div>
 
-        <div id="status" class="status"></div>
+        <!-- Right Column: Recent Vacancies -->
+        <div class="panel">
+            <h2>Последние вакансии</h2>
+            <div class="vacancy-list" id="vacancyList">
+                <p style="text-align: center; color: var(--text-muted); padding: 2rem;">Загрузка...</p>
+            </div>
 
-        <div class="links">
-            <a href="/docs" target="_blank">API Docs</a>
-            <a href="http://localhost:5555" target="_blank">Мониторинг (Flower)</a>
+            <div class="links">
+                <a href="/docs" target="_blank">📚 API Docs</a>
+                <a href="http://localhost:5555" target="_blank">📊 Monitor</a>
+                <a href="javascript:refreshVacancies()" style="margin-left: auto;">🔄 Обновить</a>
+            </div>
         </div>
     </div>
 
     <script>
-        let currentSource = 'google';
-        let availableCities = [];
+        const API_URL = '';
+        let currentHeaders = [];
+
+        const NEEDED_FIELDS = [
+            { key: 'city', label: 'Город (City)', required: true },
+            { key: 'position', label: 'Должность (Position)', required: true },
+            { key: 'address', label: 'Адрес (Address)' },
+            { key: 'tk', label: 'ТК (Store ID)' },
+            { key: 'store_type', label: 'Тип ТК (Store Type)' },
+            { key: 'schedule', label: 'График (Schedule)' },
+            { key: 'level', label: 'Уровень (Level)' },
+            { key: 'service', label: 'Услуга (Service)' },
+            { key: 'notes', label: 'Примечание (Notes)' },
+            { key: 'relevance', label: 'Актуальность (Relevance)' }
+        ];
 
         function switchTab(tab) {
-            currentSource = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            if (tab === 'google') {
-                document.getElementById('googleSection').style.display = 'block';
-                document.getElementById('excelSection').style.display = 'none';
-                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if (tab === 'sheets') {
+                document.querySelector('button[onclick="switchTab(\'sheets\')"]').classList.add('active');
+                document.getElementById('sheetsPanel').classList.remove('hidden');
+                document.getElementById('importForm').classList.add('hidden');
             } else {
-                document.getElementById('googleSection').style.display = 'none';
-                document.getElementById('excelSection').style.display = 'block';
-                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
-            }
-            document.getElementById('metadataPanel').style.display = 'none';
-            document.getElementById('status').style.display = 'none';
-        }
-
-        async function fetchGoogleMetadata() {
-            const url = document.getElementById('sheetUrl').value;
-            const btn = document.getElementById('fetchGoogleBtn');
-            if (!url) { showStatus('Введите ссылку на таблицу', 'error'); return; }
-
-            btn.disabled = true;
-            btn.innerText = '⌛';
-
-            try {
-                console.log('Fetching Google metadata for:', url);
-                const response = await fetch(`/import/google-sheets/metadata?spreadsheet_url=${encodeURIComponent(url)}`);
-                const data = await response.json();
-                console.log('Google metadata response:', data);
-                if (response.ok) {
-                    fillMetadata(data, `Найдена таблица: <b>${data.title}</b>`);
-                } else {
-                    showStatus(`❌ Ошибка: ${data.detail || 'Не удалось получить данные'}`, 'error');
-                }
-            } catch (e) {
-                showStatus(`❌ Ошибка сети: ${e.message}`, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = '🔍';
+                document.querySelector('button[onclick="switchTab(\'manual\')"]').classList.add('active');
+                document.getElementById('sheetsPanel').classList.add('hidden');
+                document.getElementById('importForm').classList.remove('hidden');
             }
         }
 
-        async function fetchExcelMetadata() {
-            const fileInput = document.getElementById('excelFile');
-            const btn = document.getElementById('fetchExcelBtn');
-            if (!fileInput.files.length) { showStatus('Выберите файл', 'error'); return; }
+        async function loadSheets() {
+            const url = document.getElementById('sheetUrl').value.trim();
+            const btn = document.getElementById('loadSheetsBtn');
+            if (!url) return alert('Enter URL');
 
-            btn.disabled = true;
-            btn.innerText = '⌛';
-
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-
+            btn.innerText = '...';
             try {
-                console.log('Fetching Excel metadata for file:', fileInput.files[0].name);
-                const response = await fetch(`/import/excel/metadata`, {
+                const res = await fetch('/google/sheets/meta', {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
                 });
-                const data = await response.json();
-                console.log('Excel metadata response:', data);
-                if (response.ok) {
-                    fillMetadata(data, `Файл прочитан: <b>${fileInput.files[0].name}</b>`);
+                const data = await res.json();
+                if (res.ok) {
+                    const select = document.getElementById('sheetSelect');
+                    select.innerHTML = '<option value="">Select a sheet...</option>';
+                    data.sheets.forEach(s => {
+                        select.innerHTML += `<option value="${s}">${s}</option>`;
+                    });
+                    document.getElementById('step2').classList.remove('hidden');
                 } else {
-                    showStatus(`❌ Ошибка: ${data.detail || 'Не удалось получить данные'}`, 'error');
+                    alert('Error: ' + data.detail);
                 }
             } catch (e) {
-                showStatus(`❌ Ошибка сети: ${e.message}`, 'error');
+                alert(e.message);
             } finally {
-                btn.disabled = false;
-                btn.innerText = '🔍';
+                btn.innerText = 'Load';
             }
         }
 
-        function fillMetadata(data, msg) {
-            const select = document.getElementById('sheetSelect');
-            select.innerHTML = '';
-            data.sheets.forEach(sheet => {
-                const opt = document.createElement('option');
-                opt.value = sheet;
-                opt.innerText = sheet;
-                select.appendChild(opt);
-            });
-
-            const citiesContainer = document.getElementById('citiesList');
-            citiesContainer.innerHTML = '';
-            availableCities = data.allowed_cities;
-            data.allowed_cities.forEach(city => {
-                const label = document.createElement('label');
-                label.style.fontWeight = 'normal';
-                label.style.display = 'flex';
-                label.style.alignItems = 'center';
-                label.style.gap = '5px';
-                label.innerHTML = `<input type="checkbox" name="city" value="${city}" checked> ${city}`;
-                citiesContainer.appendChild(label);
-            });
-
-            document.getElementById('metadataPanel').style.display = 'block';
-            showStatus(msg, 'success');
-        }
-
-        async function startImport() {
-            console.log('--- Starting Import ---');
-            const btn = document.getElementById('importBtn');
-            const sheetName = document.getElementById('sheetSelect').value;
-            const checkedCities = Array.from(document.querySelectorAll('input[name="city"]:checked')).map(cb => cb.value);
-
-            console.log('Source:', currentSource);
-            console.log('Sheet:', sheetName);
-            console.log('Cities:', checkedCities);
-
-            btn.disabled = true;
-            btn.innerText = 'Отправка...';
+        async function loadHeaders() {
+            const url = document.getElementById('sheetUrl').value.trim();
+            const sheet = document.getElementById('sheetSelect').value;
+            if (!sheet) return;
 
             try {
-                let response;
-                if (currentSource === 'google') {
-                    const url = document.getElementById('sheetUrl').value;
-                    let importUrl = `/import/google-sheets?spreadsheet_url=${encodeURIComponent(url)}&sheet_name=${encodeURIComponent(sheetName)}`;
-                    checkedCities.forEach(city => importUrl += `&cities=${encodeURIComponent(city)}`);
-                    console.log('Calling Google Import:', importUrl);
-                    response = await fetch(importUrl, { method: 'POST' });
+                const res = await fetch('/google/sheets/headers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, sheet_name: sheet })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    currentHeaders = data.headers;
+                    renderMapping();
+                    document.getElementById('step3').classList.remove('hidden');
+                    document.getElementById('importSheetsBtn').classList.remove('hidden');
                 } else {
-                    const fileInput = document.getElementById('excelFile');
-                    const formData = new FormData();
-                    formData.append('file', fileInput.files[0]);
-
-                    let importUrl = `/import/excel?sheet_name=${encodeURIComponent(sheetName)}`;
-                    checkedCities.forEach(city => importUrl += `&cities=${encodeURIComponent(city)}`);
-
-                    console.log('Calling Excel Import:', importUrl);
-                    response = await fetch(importUrl, {
-                        method: 'POST',
-                        body: formData
-                    });
-                }
-
-                console.log('Response status:', response.status);
-                const result = await response.json();
-                console.log('Response body:', result);
-
-                if (response.ok) {
-                    showStatus(`✅ <b>Успех!</b> Данные переданы воркеру.<br>Импорт выполняется в фоновом режиме.<br>ID задачи: <small>${result.task_id}</small>`, 'success');
-                    // Reset panel after success
-                    setTimeout(() => {
-                        document.getElementById('metadataPanel').style.display = 'none';
-                    }, 3000);
-                } else {
-                    showStatus(`❌ Ошибка: ${result.detail || 'Не удалось запустить'}`, 'error');
+                    alert('Error: ' + data.detail);
                 }
             } catch (e) {
-                console.error('Import error:', e);
-                showStatus(`❌ Ошибка сети: ${e.message}`, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = '🚀 Запустить импорт';
+                alert(e.message);
             }
         }
 
-        function showStatus(msg, type) {
-            const status = document.getElementById('status');
-            status.innerHTML = msg;
-            status.className = 'status ' + type;
+        function renderMapping() {
+            const container = document.getElementById('mappingContainer');
+            container.innerHTML = '';
+
+            NEEDED_FIELDS.forEach(field => {
+                // Try to auto-match
+                const headerLower = currentHeaders.map(h => String(h).toLowerCase().trim());
+                let selectedIdx = -1;
+
+                // Simple heuristics for auto-select
+                const matchers = [field.key, field.label.split('(')[0].trim().toLowerCase()];
+                if (field.key === 'city') matchers.push('город');
+                if (field.key === 'position') matchers.push('должность', 'профессия');
+
+                for (let m of matchers) {
+                    const idx = headerLower.indexOf(m.toLowerCase());
+                    if (idx !== -1) {
+                        selectedIdx = idx;
+                        break;
+                    }
+                }
+
+                let options = `<option value="">-- Skip --</option>`;
+                currentHeaders.forEach(h => {
+                    const isSel = (h === currentHeaders[selectedIdx]) ? 'selected' : '';
+                    options += `<option value="${h}" ${isSel}>${h}</option>`;
+                });
+
+                container.innerHTML += `
+                    <div class="mapping-row">
+                        <div class="mapping-label">
+                            ${field.label} ${field.required ? '<span style="color:var(--error)">*</span>' : ''}
+                        </div>
+                        <select class="mapping-select" id="map_${field.key}">
+                            ${options}
+                        </select>
+                    </div>
+                `;
+            });
         }
+
+        async function startSheetImport() {
+            const url = document.getElementById('sheetUrl').value.trim();
+            const sheet = document.getElementById('sheetSelect').value;
+            const btn = document.getElementById('importSheetsBtn');
+            const output = document.getElementById('statusOutput');
+
+            // Build mapping
+            const mapping = {};
+            let missingRequired = false;
+
+            NEEDED_FIELDS.forEach(field => {
+                const val = document.getElementById(`map_${field.key}`).value;
+                if (val) {
+                    mapping[val] = field.key; // { "Column Name": "internal_key" }
+                } else if (field.required) {
+                    missingRequired = true;
+                }
+            });
+
+            if (missingRequired) {
+                alert('Please map all required fields (*)');
+                return;
+            }
+
+            btn.classList.add('loading');
+            btn.disabled = true;
+            output.className = '';
+            output.innerText = '';
+
+            try {
+                const res = await fetch('/import/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        spreadsheet_input: url,
+                        sheet_name: sheet,
+                        column_mapping: mapping
+                    })
+                });
+                const result = await res.json();
+
+                if (res.ok) {
+                    output.className = 'output-success';
+                    output.innerHTML = `✅ <b>Success!</b> Task ID: <br><small>${result.task_id}</small>`;
+                    refreshVacancies();
+                } else {
+                    output.className = 'output-error';
+                    output.innerText = `❌ Error: ${result.detail || JSON.stringify(result)}`;
+                }
+            } catch (e) {
+                output.className = 'output-error';
+                output.innerText = `❌ Error: ${e.message}`;
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+
+        // Generate a random ID on load
+        document.getElementById('vacancyId').value = 'M' + Math.floor(Math.random() * 900000 + 100000);
+
+        async function refreshVacancies() {
+            const list = document.getElementById('vacancyList');
+            try {
+                const response = await fetch(`${API_URL}/vacancies?per_page=15`);
+                const data = await response.json();
+
+                if (data.items.length === 0) {
+                    list.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Вакансий пока нет</p>';
+                    return;
+                }
+
+                list.innerHTML = data.items.map(v => `
+                    <div class="vacancy-item">
+                        <div class="vacancy-info">
+                            <h3>${v.position}</h3>
+                            <p>${v.city} · ${v.id}</p>
+                            <p style="font-size: 11px;">${new Date(v.created_at).toLocaleString('ru-RU')}</p>
+                        </div>
+                        <div class="status-badge status-${v.status}">${v.status}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = `<p style="text-align: center; color: var(--error); padding: 2rem;">Ошибка загрузки: ${e.message}</p>`;
+            }
+        }
+
+        document.getElementById('importForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const output = document.getElementById('statusOutput');
+
+            btn.classList.add('loading');
+            btn.disabled = true;
+            output.className = '';
+            output.innerText = '';
+
+            const data = [{
+                id: document.getElementById('vacancyId').value,
+                city: document.getElementById('city').value,
+                address: document.getElementById('address').value,
+                position: document.getElementById('position').value,
+                profession: document.getElementById('position').value,
+                schedule: document.getElementById('schedule').value,
+                level: document.getElementById('level').value,
+                salary_min: parseInt(document.getElementById('salaryMin').value) || null,
+                salary_max: parseInt(document.getElementById('salaryMax').value) || null,
+                notes: document.getElementById('notes').value
+            }];
+
+            try {
+                const response = await fetch(`${API_URL}/import/json`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    output.className = 'output-success';
+                    output.innerHTML = `✅ <b>Успех!</b> Задача запущена: <br><small>${result.task_id}</small>`;
+
+                    // Reset ID
+                    document.getElementById('vacancyId').value = 'M' + Math.floor(Math.random() * 900000 + 100000);
+                    refreshVacancies();
+                } else {
+                    console.error('Import Error Details:', result);
+                    output.className = 'output-error';
+                    const errorMsg = typeof result.detail === 'string'
+                        ? result.detail
+                        : JSON.stringify(result.detail, null, 2);
+                    output.innerText = `❌ Ошибка: ${errorMsg}`;
+                }
+            } catch (err) {
+                output.className = 'output-error';
+                output.innerText = `❌ Сетевая ошибка: ${err.message}`;
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        };
+
+        async function startBatch() {
+            if (!confirm('Запустить обработку всех ожидающих вакансий?')) return;
+            try {
+                const response = await fetch(`${API_URL}/generate/batch`, { method: 'POST' });
+                const result = await response.json();
+                alert(`Задача запущена: ${result.task_id}`);
+            } catch (e) {
+                alert(`Ошибка: ${e.message}`);
+            }
+        }
+
+        async function exportXml() {
+            try {
+                const response = await fetch(`${API_URL}/publish/xml`, { method: 'POST' });
+                const result = await response.json();
+                alert(`Экспорт запущен: ${result.task_id}`);
+            } catch (e) {
+                alert(`Ошибка: ${e.message}`);
+            }
+        }
+
+        // Initial load
+        refreshVacancies();
+        // Auto refresh every 30s
+        setInterval(refreshVacancies, 30000);
     </script>
 </body>
 

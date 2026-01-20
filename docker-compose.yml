@@ -64,10 +64,18 @@ services:
       - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
       - YANDEX_DISK_TOKEN=${YANDEX_DISK_TOKEN}
       - YANDEX_DISK_FOLDER=${YANDEX_DISK_FOLDER}
+      - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
     ports:
       - "8000:8000"
     volumes:
       - ./services:/app/services
+      - ./credentials.json:/app/credentials.json:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,8 +95,16 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-adsgen}:${POSTGRES_PASSWORD:-adsgen_secret}@postgres:5432/${POSTGRES_DB:-adsgen}
       - REDIS_URL=redis://redis:6379/0
+      - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
     volumes:
       - ./services:/app/services
+      - ./credentials.json:/app/credentials.json:ro
+    healthcheck:
+      test: ["CMD", "celery", "-A", "services.import_worker.tasks", "inspect", "ping", "-d", "import_worker@$$HOSTNAME"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
     depends_on:
       postgres:
         condition: service_healthy
@@ -107,6 +123,12 @@ services:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
     volumes:
       - ./services:/app/services
+    healthcheck:
+      test: ["CMD", "celery", "-A", "services.textgen_worker.tasks", "inspect", "ping", "-d", "textgen_worker@$$HOSTNAME"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
     depends_on:
       postgres:
         condition: service_healthy
@@ -128,6 +150,12 @@ services:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
     volumes:
       - ./services:/app/services
+    healthcheck:
+      test: ["CMD", "celery", "-A", "services.imagegen_worker.tasks", "inspect", "ping", "-d", "imagegen_worker@$$HOSTNAME"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
     depends_on:
       postgres:
         condition: service_healthy
@@ -145,6 +173,12 @@ services:
       - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./services:/app/services
+    healthcheck:
+      test: ["CMD", "celery", "-A", "services.validation_worker.tasks", "inspect", "ping", "-d", "validation_worker@$$HOSTNAME"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
     depends_on:
       postgres:
         condition: service_healthy
@@ -166,6 +200,12 @@ services:
       - YANDEX_DISK_FOLDER=${YANDEX_DISK_FOLDER}
     volumes:
       - ./services:/app/services
+    healthcheck:
+      test: ["CMD", "celery", "-A", "services.publisher_worker.tasks", "inspect", "ping", "-d", "publisher_worker@$$HOSTNAME"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
     depends_on:
       postgres:
         condition: service_healthy

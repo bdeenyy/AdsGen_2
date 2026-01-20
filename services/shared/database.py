@@ -47,5 +47,10 @@ async def get_session() -> AsyncSession:
 
 async def init_db():
     """Initialize database tables."""
+    # Import models to ensure they are registered with Base.metadata
+    # items are imported locally to avoid circular imports
+    from .models.vacancy import Vacancy
+    from .models.import_batch import ImportBatch
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
