@@ -66,3 +66,4 @@ dmypy.json
 monitor_vacancies.sql
 test_vacancy.json
 credentials.json
+legacy/
