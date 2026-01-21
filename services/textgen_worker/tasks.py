@@ -10,10 +10,11 @@ from typing import Optional
 
 import httpx
 from celery import shared_task
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.shared.config import get_settings
+from services.shared.database import get_sync_engine
 from services.shared.models.vacancy import Vacancy, VacancyStatus
 from services.shared.celery_app import celery_app
 from .prompts import get_generation_prompt, DESCRIPTION_TEMPLATES
@@ -21,9 +22,8 @@ from .prompts import get_generation_prompt, DESCRIPTION_TEMPLATES
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-sync_engine = create_engine(
-    settings.database_url.replace("+asyncpg", "").replace("postgresql+asyncpg", "postgresql+psycopg2")
-)
+# Sync engine from shared module
+sync_engine = get_sync_engine()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -65,11 +65,14 @@ def generate_vacancy_text(self, vacancy_id: str) -> dict:
             
             session.commit()
             
-            # Trigger image generation
-            from services.imagegen_worker.tasks import generate_vacancy_image
-            generate_vacancy_image.delay(vacancy_id)
-            
-            logger.info(f"Text generated successfully for: {vacancy_id}")
+            # Trigger image generation (unless in step mode)
+            from services.shared.config import is_step_mode_enabled
+            if not is_step_mode_enabled():
+                from services.imagegen_worker.tasks import generate_vacancy_image
+                generate_vacancy_image.delay(vacancy_id)
+                logger.info(f"Text generated, triggering image generation for: {vacancy_id}")
+            else:
+                logger.info(f"Text generated for {vacancy_id} (step mode - stopping here)")
             
             return {
                 "vacancy_id": vacancy_id,

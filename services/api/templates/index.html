@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AdsGen 2.0 - Control Panel</title>
+    <title>AdsGen 2.0 - Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -16,13 +16,16 @@
             --text-muted: #94a3b8;
             --border: #334155;
             --success: #10b981;
+            --warning: #f59e0b;
             --error: #ef4444;
+            --info: #3b82f6;
             --glass: rgba(30, 41, 59, 0.7);
         }
 
         * {
             box-sizing: border-box;
-            transition: all 0.2s ease;
+            margin: 0;
+            padding: 0;
         }
 
         body {
@@ -32,54 +35,360 @@
                 radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
             color: var(--text);
-            margin: 0;
-            padding: 2rem;
             min-height: 100vh;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* HEADER & NAVIGATION */
+        /* ═══════════════════════════════════════════════════════════════════ */
+
+        .header {
             display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-        }
-
-        @media (max-width: 968px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .panel {
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
             background: var(--glass);
             backdrop-filter: blur(12px);
-            padding: 2rem;
-            border-radius: 24px;
-            border: 1px solid var(--border);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-            height: fit-content;
         }
 
-        h1,
-        h2 {
-            margin-top: 0;
-            margin-bottom: 1.5rem;
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
             background: linear-gradient(to right, #818cf8, #c084fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        h1 {
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .step-mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .toggle {
+            width: 44px;
+            height: 24px;
+            background: var(--border);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle.active {
+            background: var(--success);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: left 0.3s;
+        }
+
+        .toggle.active::after {
+            left: 22px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* MAIN CONTENT */
+        /* ═══════════════════════════════════════════════════════════════════ */
+
+        .main {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* DASHBOARD */
+        /* ═══════════════════════════════════════════════════════════════════ */
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .stat-card .value {
             font-size: 32px;
             font-weight: 700;
         }
 
-        h2 {
+        .stat-card.pending .value {
+            color: var(--warning);
+        }
+
+        .stat-card.processing .value {
+            color: var(--info);
+        }
+
+        .stat-card.completed .value {
+            color: var(--success);
+        }
+
+        .stat-card.error .value {
+            color: var(--error);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* VACANCIES TABLE */
+        /* ═══════════════════════════════════════════════════════════════════ */
+
+        .panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-input {
+            padding: 8px 12px;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .status-text_generating,
+        .status-image_generating,
+        .status-validating,
+        .status-publishing {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+        }
+
+        .status-text_generated,
+        .status-image_generated,
+        .status-validated,
+        .status-published {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 4px;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .action-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--error);
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 1rem;
+        }
+
+        .page-btn {
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* MODAL */
+        /* ═══════════════════════════════════════════════════════════════════ */
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
             font-size: 20px;
             font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
         }
 
         .form-grid {
@@ -89,139 +398,44 @@
         }
 
         .form-group {
-            margin-bottom: 1.2rem;
+            margin-bottom: 1rem;
         }
 
         .form-group.full {
             grid-column: span 2;
         }
 
-        label {
+        .form-group label {
             display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px 16px;
-            background: #0f172a;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text);
-            font-size: 15px;
-            font-family: inherit;
-            outline: none;
-        }
-
-        input:focus,
-        select:focus,
-        textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .status-pending {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-        }
-
-        .status-processing {
-            background: rgba(99, 102, 241, 0.2);
-            color: #818cf8;
-        }
-
-        .status-completed {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-        }
-
-        .status-failed {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-
-        .vacancy-list {
-            margin-top: 1rem;
-            max-height: 600px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--border) transparent;
-        }
-
-        .vacancy-item {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .vacancy-item:last-child {
-            border-bottom: none;
-        }
-
-        .vacancy-info h3 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .vacancy-info p {
-            margin: 4px 0 0;
+            margin-bottom: 6px;
             font-size: 13px;
             color: var(--text-muted);
         }
 
-        .quick-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 1.5rem;
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
 
         .btn-secondary {
@@ -230,308 +444,682 @@
             color: var(--text);
         }
 
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            box-shadow: none;
-        }
-
-        #statusOutput {
-            margin-top: 1rem;
-            padding: 1rem;
-            border-radius: 12px;
-            font-size: 14px;
-            display: none;
-        }
-
-        .output-success {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            display: block !important;
-        }
-
-        .output-error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #f87171;
-            display: block !important;
-        }
-
-        .links {
-            margin-top: 2rem;
+        .modal-actions {
             display: flex;
-            justify-content: center;
-            gap: 24px;
-            font-size: 14px;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
         }
 
-        .links a {
-            color: var(--text-muted);
-            text-decoration: none;
+        /* Worker buttons */
+        .worker-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .worker-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .links a:hover {
-            color: var(--primary);
+        .worker-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--primary);
         }
 
-        /* Loader Animation */
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            display: none;
+        .worker-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* IMPORT TAB */
+        /* ═══════════════════════════════════════════════════════════════════ */
+
+        .import-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .import-section {
+                grid-template-columns: 1fr;
             }
         }
 
-        button.loading .spinner {
-            display: block;
+        .import-card {
+            background: var(--glass);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
         }
 
-        button.loading .btn-text {
-            display: none;
+        .import-card h3 {
+            margin-bottom: 1rem;
+            font-size: 16px;
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--error);
+        }
+
+        .toast.info {
+            background: var(--info);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Links */
+        .links {
+            display: flex;
+            gap: 20px;
+            margin-top: 2rem;
+            justify-content: center;
+        }
+
+        .links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .links a:hover {
+            color: var(--primary);
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <!-- Left Column: Form -->
-        <div class="panel">
-            <h1>AdsGen 2.0 🚀</h1>
-            <h2>Ручной импорт для теста</h2>
-
-            <h1>AdsGen 2.0 🚀</h1>
-
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('sheets')">Google Sheets Import</button>
-                <button class="tab-btn" onclick="switchTab('manual')">Manual Import</button>
-            </div>
-
-            <style>
-                .tabs {
-                    display: flex;
-                    gap: 10px;
-                    margin-bottom: 20px;
-                }
-
-                .tab-btn {
-                    background: transparent;
-                    border: 1px solid var(--border);
-                    color: var(--text-muted);
-                    padding: 8px 16px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    width: auto;
-                }
-
-                .tab-btn.active {
-                    background: var(--primary);
-                    color: white;
-                    border-color: var(--primary);
-                }
-
-                .step-section {
-                    border: 1px solid var(--border);
-                    padding: 15px;
-                    border-radius: 12px;
-                    margin-bottom: 15px;
-                    background: rgba(0, 0, 0, 0.2);
-                }
-
-                .mapping-row {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    margin-bottom: 8px;
-                }
-
-                .mapping-label {
-                    flex: 1;
-                    font-size: 14px;
-                    color: var(--text-muted);
-                }
-
-                .mapping-select {
-                    flex: 2;
-                }
-
-                .hidden {
-                    display: none;
-                }
-            </style>
-
-            <!-- GOOGLE SHEETS FORM -->
-            <div id="sheetsPanel">
-                <div class="step-section">
-                    <label>1. Google Sheet URL / ID</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..."
-                            value="">
-                        <button onclick="loadSheets()" id="loadSheetsBtn" style="width: auto;">Load</button>
-                    </div>
-                </div>
-
-                <div id="step2" class="step-section hidden">
-                    <label>2. Select Sheet</label>
-                    <select id="sheetSelect" onchange="loadHeaders()">
-                        <option value="">Select a sheet...</option>
-                    </select>
-                </div>
-
-                <div id="step3" class="step-section hidden">
-                    <label>3. Map Columns</label>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Match internal fields to
-                        your sheet columns.</p>
-
-                    <div id="mappingContainer">
-                        <!-- Mapping rows will be injected here -->
-                    </div>
-                </div>
-
-                <button id="importSheetsBtn" onclick="startSheetImport()" class="hidden">
-                    <div class="spinner"></div>
-                    <span class="btn-text">🚀 Start Import</span>
-                </button>
-            </div>
-
-            <!-- MANUAL FORM -->
-            <form id="importForm" class="hidden">
-                <div class="form-grid">
-                    <div class="form-group full">
-                        <label>Должность / Профессия</label>
-                        <input type="text" id="position" placeholder="Например: Продавец-кассир">
-                    </div>
-
-                    <div class="form-group">
-                        <label>ID вакансии (уникальный)</label>
-                        <input type="text" id="vacancyId" placeholder="M123456">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Город</label>
-                        <input type="text" id="city" placeholder="Москва">
-                    </div>
-
-                    <div class="form-group full">
-                        <label>Адрес</label>
-                        <input type="text" id="address" placeholder="ул. Ленина, д. 1">
-                    </div>
-
-                    <div class="form-group">
-                        <label>График</label>
-                        <select id="schedule">
-                            <option value="2/2">2/2</option>
-                            <option value="5/2">5/2</option>
-                            <option value="Сменный">Сменный</option>
-                            <option value="Гибкий">Гибкий</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Уровень</label>
-                        <select id="level">
-                            <option value="Без опыта">Без опыта</option>
-                            <option value="Начинающий">Начинающий</option>
-                            <option value="Специалист">Специалист</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Зарплата ОТ</label>
-                        <input type="number" id="salaryMin" placeholder="45000">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Зарплата ДО</label>
-                        <input type="number" id="salaryMax" placeholder="60000">
-                    </div>
-
-                    <div class="form-group full">
-                        <label>Доп. примечания</label>
-                        <textarea id="notes" rows="3" placeholder="Особенности..."></textarea>
-                    </div>
-                </div>
-
-                <button type="submit" id="submitBtn">
-                    <div class="spinner"></div>
-                    <span class="btn-text">🚀 Запустить импорт</span>
-                </button>
-            </form>
-
-            <div id="statusOutput"></div>
-
-            <div class="quick-actions">
-                <button class="btn-secondary" onclick="startBatch()">
-                    <span>📦 Batch Process All</span>
-                </button>
-                <button class="btn-secondary" onclick="exportXml()">
-                    <span>📄 Export XML</span>
-                </button>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">AdsGen 2.0 🚀</div>
+        <nav class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" onclick="switchTab('vacancies')">📋 Вакансии</button>
+            <button class="nav-tab" onclick="switchTab('import')">📥 Импорт</button>
+            <button class="nav-tab" onclick="switchTab('settings')">⚙️ Настройки</button>
+        </nav>
+        <div class="header-actions">
+            <div class="step-mode-toggle">
+                <span>Step Mode</span>
+                <div class="toggle" id="stepModeToggle" onclick="toggleStepMode()"></div>
             </div>
         </div>
+    </header>
 
-        <!-- Right Column: Recent Vacancies -->
-        <div class="panel">
-            <h2>Последние вакансии</h2>
-            <div class="vacancy-list" id="vacancyList">
-                <p style="text-align: center; color: var(--text-muted); padding: 2rem;">Загрузка...</p>
+    <main class="main">
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <h3>Всего вакансий</h3>
+                    <div class="value" id="statTotal">-</div>
+                </div>
+                <div class="stat-card pending">
+                    <h3>Ожидают</h3>
+                    <div class="value" id="statPending">-</div>
+                </div>
+                <div class="stat-card processing">
+                    <h3>В обработке</h3>
+                    <div class="value" id="statProcessing">-</div>
+                </div>
+                <div class="stat-card completed">
+                    <h3>Готовы</h3>
+                    <div class="value" id="statCompleted">-</div>
+                </div>
+                <div class="stat-card error">
+                    <h3>Ошибки</h3>
+                    <div class="value" id="statError">-</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Последние вакансии</h2>
+                    <button class="action-btn" onclick="loadVacancies()">🔄 Обновить</button>
+                </div>
+                <div id="recentVacancies">Загрузка...</div>
             </div>
 
             <div class="links">
                 <a href="/docs" target="_blank">📚 API Docs</a>
-                <a href="http://localhost:5555" target="_blank">📊 Monitor</a>
-                <a href="javascript:refreshVacancies()" style="margin-left: auto;">🔄 Обновить</a>
+                <a href="http://localhost:5555" target="_blank">📊 Flower Monitor</a>
+            </div>
+        </div>
+
+        <!-- Vacancies Tab -->
+        <div id="vacancies" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Все вакансии</h2>
+                    <div class="filters">
+                        <select class="filter-input" id="statusFilter" onchange="loadVacancies()">
+                            <option value="">Все статусы</option>
+                            <option value="pending">Pending</option>
+                            <option value="text_generated">Text Generated</option>
+                            <option value="image_generated">Image Generated</option>
+                            <option value="validated">Validated</option>
+                            <option value="published">Published</option>
+                            <option value="error">Error</option>
+                        </select>
+                        <input type="text" class="filter-input" id="cityFilter" placeholder="Город..."
+                            onkeyup="loadVacancies()">
+                        <button class="action-btn" onclick="loadVacancies()">🔄</button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Должность</th>
+                            <th>Город</th>
+                            <th>Статус</th>
+                            <th>Создан</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vacanciesTable">
+                    </tbody>
+                </table>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+
+        <!-- Import Tab -->
+        <div id="import" class="tab-content">
+            <div class="import-section">
+                <div class="import-card">
+                    <h3>📊 Google Sheets Import</h3>
+                    <div class="form-group">
+                        <label>URL таблицы</label>
+                        <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadSheets()">Загрузить листы</button>
+                    <div id="sheetOptions" style="margin-top: 1rem;"></div>
+                </div>
+
+                <div class="import-card">
+                    <h3>📝 Ручной импорт</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Должность *</label>
+                            <input type="text" id="manualPosition" placeholder="Продавец-кассир">
+                        </div>
+                        <div class="form-group">
+                            <label>Город *</label>
+                            <input type="text" id="manualCity" placeholder="Москва">
+                        </div>
+                        <div class="form-group full">
+                            <label>Адрес</label>
+                            <input type="text" id="manualAddress" placeholder="ул. Ленина, 1">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="manualImport()">🚀 Импортировать</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <div class="import-section">
+                <div class="import-card">
+                    <h3>🏢 Профиль компании</h3>
+                    <p style="color:var(--text-muted);margin-bottom:1rem;font-size:13px">
+                        Эти данные используются по умолчанию при экспорте в XML
+                    </p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Имя менеджера</label>
+                            <input type="text" id="profileManagerName" placeholder="Анастасия">
+                        </div>
+                        <div class="form-group">
+                            <label>Телефон контакта</label>
+                            <input type="text" id="profilePhone" placeholder="79082348946">
+                        </div>
+                        <div class="form-group">
+                            <label>Название компании</label>
+                            <input type="text" id="profileCompanyName" placeholder="Проектстрой-8">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="text" id="profileEmail" placeholder="company@mail.ru">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveProfile()">💾 Сохранить профиль</button>
+                </div>
+
+                <div class="import-card">
+                    <h3>📤 Экспорт XML</h3>
+                    <p style="color:var(--text-muted);margin-bottom:1rem;font-size:13px">
+                        Экспортировать готовые вакансии в формат Avito XML
+                    </p>
+                    <button class="btn btn-primary" onclick="exportXML()">🚀 Экспортировать все</button>
+                    <div id="exportResult" style="margin-top:1rem"></div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top:2rem">
+                <div class="panel-header">
+                    <h2 class="panel-title">⚙️ Дополнительные настройки</h2>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Тип занятости</label>
+                        <select class="filter-input" id="profileEmploymentType">
+                            <option value="Полная">Полная</option>
+                            <option value="Частичная">Частичная</option>
+                            <option value="Временная">Временная</option>
+                            <option value="Стажировка">Стажировка</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>График работы</label>
+                        <select class="filter-input" id="profileJobType">
+                            <option value="Гибкий">Гибкий</option>
+                            <option value="Сменный">Сменный</option>
+                            <option value="Фиксированный">Фиксированный</option>
+                            <option value="Вахта">Вахта</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Опыт работы</label>
+                        <select class="filter-input" id="profileExperience">
+                            <option value="Без опыта">Без опыта</option>
+                            <option value="Более 1 года">Более 1 года</option>
+                            <option value="Более 3 лет">Более 3 лет</option>
+                            <option value="Более 5 лет">Более 5 лет</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Период оплаты</label>
+                        <select class="filter-input" id="profilePayPeriod">
+                            <option value="за смену">за смену</option>
+                            <option value="в месяц">в месяц</option>
+                            <option value="в час">в час</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for viewing/editing vacancy -->
+    <div class="modal-overlay" id="vacancyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Вакансия <span id="modalVacancyId"></span></h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Должность</label>
+                    <input type="text" id="editPosition">
+                </div>
+                <div class="form-group">
+                    <label>Профессия (Avito)</label>
+                    <input type="text" id="editProfession">
+                </div>
+                <div class="form-group">
+                    <label>Город</label>
+                    <input type="text" id="editCity">
+                </div>
+                <div class="form-group">
+                    <label>Адрес</label>
+                    <input type="text" id="editAddress">
+                </div>
+                <div class="form-group full">
+                    <label>Заголовок (сгенерированный)</label>
+                    <input type="text" id="editTitle">
+                </div>
+                <div class="form-group full">
+                    <label>Описание</label>
+                    <textarea id="editDescription" rows="5"></textarea>
+                </div>
+                <div class="form-group full">
+                    <label>URL картинки</label>
+                    <input type="text" id="editImageUrl">
+                </div>
+                <div class="form-group">
+                    <label>Статус</label>
+                    <input type="text" id="editStatus" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Ошибка</label>
+                    <input type="text" id="editError" disabled>
+                </div>
+            </div>
+
+            <div class="worker-actions">
+                <span style="color: var(--text-muted); font-size: 13px;">Запустить вручную:</span>
+                <button class="worker-btn" onclick="runWorker('generate-text')">📝 Text</button>
+                <button class="worker-btn" onclick="runWorker('generate-image')">🖼️ Image</button>
+                <button class="worker-btn" onclick="runWorker('validate')">✅ Validate</button>
+                <button class="worker-btn" onclick="runWorker('publish')">📤 Publish</button>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="deleteCurrentVacancy()">🗑️ Удалить</button>
+                <button class="btn btn-primary" onclick="saveVacancy()">💾 Сохранить</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = '';
-        let currentHeaders = [];
+        let currentVacancyId = null;
+        let currentPage = 1;
 
-        const NEEDED_FIELDS = [
-            { key: 'city', label: 'Город (City)', required: true },
-            { key: 'position', label: 'Должность (Position)', required: true },
-            { key: 'address', label: 'Адрес (Address)' },
-            { key: 'tk', label: 'ТК (Store ID)' },
-            { key: 'store_type', label: 'Тип ТК (Store Type)' },
-            { key: 'schedule', label: 'График (Schedule)' },
-            { key: 'level', label: 'Уровень (Level)' },
-            { key: 'service', label: 'Услуга (Service)' },
-            { key: 'notes', label: 'Примечание (Notes)' },
-            { key: 'relevance', label: 'Актуальность (Relevance)' }
-        ];
+        // ═══════════════════════════════════════════════════════════════════
+        // TAB NAVIGATION
+        // ═══════════════════════════════════════════════════════════════════
 
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if (tab === 'sheets') {
-                document.querySelector('button[onclick="switchTab(\'sheets\')"]').classList.add('active');
-                document.getElementById('sheetsPanel').classList.remove('hidden');
-                document.getElementById('importForm').classList.add('hidden');
-            } else {
-                document.querySelector('button[onclick="switchTab(\'manual\')"]').classList.add('active');
-                document.getElementById('sheetsPanel').classList.add('hidden');
-                document.getElementById('importForm').classList.remove('hidden');
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+
+            if (tabId === 'dashboard') loadStats();
+            if (tabId === 'vacancies') loadVacancies();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP MODE
+        // ═══════════════════════════════════════════════════════════════════
+
+        async function loadStepMode() {
+            try {
+                const res = await fetch('/settings/step-mode');
+                const data = await res.json();
+                const toggle = document.getElementById('stepModeToggle');
+                if (data.step_mode) {
+                    toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
+                }
+            } catch (e) {
+                console.error('Failed to load step mode:', e);
             }
         }
 
-        async function loadSheets() {
-            const url = document.getElementById('sheetUrl').value.trim();
-            const btn = document.getElementById('loadSheetsBtn');
-            if (!url) return alert('Enter URL');
+        async function toggleStepMode() {
+            const toggle = document.getElementById('stepModeToggle');
+            const newState = !toggle.classList.contains('active');
 
-            btn.innerText = '...';
+            try {
+                await fetch('/settings/step-mode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: newState })
+                });
+
+                if (newState) {
+                    toggle.classList.add('active');
+                    showToast('Step Mode включен — воркеры будут останавливаться после каждого шага', 'info');
+                } else {
+                    toggle.classList.remove('active');
+                    showToast('Step Mode выключен — автоматическая обработка', 'info');
+                }
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STATS
+        // ═══════════════════════════════════════════════════════════════════
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/stats');
+                const data = await res.json();
+
+                document.getElementById('statTotal').textContent = data.total;
+                document.getElementById('statPending').textContent = data.by_status.pending || 0;
+
+                const processing = (data.by_status.text_generating || 0) +
+                    (data.by_status.image_generating || 0) +
+                    (data.by_status.validating || 0) +
+                    (data.by_status.publishing || 0);
+                document.getElementById('statProcessing').textContent = processing;
+
+                const completed = (data.by_status.published || 0) + (data.by_status.validated || 0);
+                document.getElementById('statCompleted').textContent = completed;
+
+                document.getElementById('statError').textContent = data.by_status.error || 0;
+
+                // Load recent vacancies
+                loadRecentVacancies();
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+            }
+        }
+
+        async function loadRecentVacancies() {
+            try {
+                const res = await fetch('/vacancies?per_page=5');
+                const data = await res.json();
+
+                if (data.items.length === 0) {
+                    document.getElementById('recentVacancies').innerHTML = '<p style="color:var(--text-muted)">Нет вакансий</p>';
+                    return;
+                }
+
+                let html = '<table><thead><tr><th>ID</th><th>Должность</th><th>Город</th><th>Статус</th></tr></thead><tbody>';
+                data.items.forEach(v => {
+                    html += `<tr onclick="openVacancy('${v.id}')" style="cursor:pointer">
+                        <td>${v.id}</td>
+                        <td>${v.position}</td>
+                        <td>${v.city}</td>
+                        <td><span class="status-badge status-${v.status}">${v.status}</span></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('recentVacancies').innerHTML = html;
+            } catch (e) {
+                document.getElementById('recentVacancies').innerHTML = '<p style="color:var(--error)">Ошибка загрузки</p>';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // VACANCIES
+        // ═══════════════════════════════════════════════════════════════════
+
+        async function loadVacancies() {
+            const status = document.getElementById('statusFilter')?.value || '';
+            const city = document.getElementById('cityFilter')?.value || '';
+
+            let url = `/vacancies?page=${currentPage}&per_page=20`;
+            if (status) url += `&status=${status}`;
+            if (city) url += `&city=${city}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+
+                const tbody = document.getElementById('vacanciesTable');
+                if (!tbody) return;
+
+                if (data.items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Нет вакансий</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.items.map(v => `
+                    <tr>
+                        <td><code>${v.id}</code></td>
+                        <td>${v.position}</td>
+                        <td>${v.city}</td>
+                        <td><span class="status-badge status-${v.status}">${v.status}</span></td>
+                        <td>${new Date(v.created_at).toLocaleDateString('ru')}</td>
+                        <td>
+                            <button class="action-btn" onclick="openVacancy('${v.id}')">✏️</button>
+                            <button class="action-btn danger" onclick="deleteVacancy('${v.id}')">🗑️</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Pagination
+                const totalPages = Math.ceil(data.total / 20);
+                const pag = document.getElementById('pagination');
+                pag.innerHTML = '';
+                for (let i = 1; i <= Math.min(totalPages, 10); i++) {
+                    pag.innerHTML += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                }
+            } catch (e) {
+                showToast('Ошибка загрузки: ' + e.message, 'error');
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            loadVacancies();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // MODAL
+        // ═══════════════════════════════════════════════════════════════════
+
+        async function openVacancy(id) {
+            currentVacancyId = id;
+
+            try {
+                const res = await fetch(`/vacancies/${id}`);
+                const v = await res.json();
+
+                document.getElementById('modalVacancyId').textContent = id;
+                document.getElementById('editPosition').value = v.position || '';
+                document.getElementById('editProfession').value = v.profession || '';
+                document.getElementById('editCity').value = v.city || '';
+                document.getElementById('editAddress').value = v.address || '';
+                document.getElementById('editTitle').value = v.title || '';
+                document.getElementById('editDescription').value = v.description || '';
+                document.getElementById('editImageUrl').value = v.image_url || '';
+                document.getElementById('editStatus').value = v.status || '';
+                document.getElementById('editError').value = v.error_message || '';
+
+                document.getElementById('vacancyModal').classList.add('active');
+            } catch (e) {
+                showToast('Ошибка загрузки вакансии', 'error');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('vacancyModal').classList.remove('active');
+            currentVacancyId = null;
+        }
+
+        async function saveVacancy() {
+            if (!currentVacancyId) return;
+
+            const updates = {
+                position: document.getElementById('editPosition').value,
+                profession: document.getElementById('editProfession').value,
+                city: document.getElementById('editCity').value,
+                address: document.getElementById('editAddress').value,
+                title: document.getElementById('editTitle').value,
+                description: document.getElementById('editDescription').value,
+                image_url: document.getElementById('editImageUrl').value,
+            };
+
+            try {
+                await fetch(`/vacancies/${currentVacancyId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+                showToast('Сохранено!', 'success');
+                closeModal();
+                loadVacancies();
+                loadStats();
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function runWorker(action) {
+            if (!currentVacancyId) return;
+
+            try {
+                const res = await fetch(`/vacancies/${currentVacancyId}/${action}`, { method: 'POST' });
+                const data = await res.json();
+                showToast(`Задача запущена: ${data.task_id}`, 'success');
+
+                // Refresh after a short delay
+                setTimeout(() => openVacancy(currentVacancyId), 2000);
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function deleteVacancy(id) {
+            if (!confirm(`Удалить вакансию ${id}?`)) return;
+
+            try {
+                await fetch(`/vacancies/${id}`, { method: 'DELETE' });
+                showToast('Удалено', 'success');
+                loadVacancies();
+                loadStats();
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function deleteCurrentVacancy() {
+            if (currentVacancyId) {
+                await deleteVacancy(currentVacancyId);
+                closeModal();
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // IMPORT
+        // ═══════════════════════════════════════════════════════════════════
+
+        async function loadSheets() {
+            const url = document.getElementById('sheetUrl').value;
+            if (!url) return alert('Введите URL');
+
             try {
                 const res = await fetch('/google/sheets/meta', {
                     method: 'POST',
@@ -539,256 +1127,180 @@
                     body: JSON.stringify({ url })
                 });
                 const data = await res.json();
-                if (res.ok) {
-                    const select = document.getElementById('sheetSelect');
-                    select.innerHTML = '<option value="">Select a sheet...</option>';
-                    data.sheets.forEach(s => {
-                        select.innerHTML += `<option value="${s}">${s}</option>`;
-                    });
-                    document.getElementById('step2').classList.remove('hidden');
-                } else {
-                    alert('Error: ' + data.detail);
-                }
-            } catch (e) {
-                alert(e.message);
-            } finally {
-                btn.innerText = 'Load';
-            }
-        }
 
-        async function loadHeaders() {
-            const url = document.getElementById('sheetUrl').value.trim();
-            const sheet = document.getElementById('sheetSelect').value;
-            if (!sheet) return;
-
-            try {
-                const res = await fetch('/google/sheets/headers', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url, sheet_name: sheet })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    currentHeaders = data.headers;
-                    renderMapping();
-                    document.getElementById('step3').classList.remove('hidden');
-                    document.getElementById('importSheetsBtn').classList.remove('hidden');
-                } else {
-                    alert('Error: ' + data.detail);
-                }
-            } catch (e) {
-                alert(e.message);
-            }
-        }
-
-        function renderMapping() {
-            const container = document.getElementById('mappingContainer');
-            container.innerHTML = '';
-
-            NEEDED_FIELDS.forEach(field => {
-                // Try to auto-match
-                const headerLower = currentHeaders.map(h => String(h).toLowerCase().trim());
-                let selectedIdx = -1;
-
-                // Simple heuristics for auto-select
-                const matchers = [field.key, field.label.split('(')[0].trim().toLowerCase()];
-                if (field.key === 'city') matchers.push('город');
-                if (field.key === 'position') matchers.push('должность', 'профессия');
-
-                for (let m of matchers) {
-                    const idx = headerLower.indexOf(m.toLowerCase());
-                    if (idx !== -1) {
-                        selectedIdx = idx;
-                        break;
-                    }
-                }
-
-                let options = `<option value="">-- Skip --</option>`;
-                currentHeaders.forEach(h => {
-                    const isSel = (h === currentHeaders[selectedIdx]) ? 'selected' : '';
-                    options += `<option value="${h}" ${isSel}>${h}</option>`;
-                });
-
-                container.innerHTML += `
-                    <div class="mapping-row">
-                        <div class="mapping-label">
-                            ${field.label} ${field.required ? '<span style="color:var(--error)">*</span>' : ''}
-                        </div>
-                        <select class="mapping-select" id="map_${field.key}">
-                            ${options}
+                if (data.sheets) {
+                    document.getElementById('sheetOptions').innerHTML = `
+                        <select id="selectedSheet" class="filter-input">
+                            ${data.sheets.map(s => `<option>${s}</option>`).join('')}
                         </select>
-                    </div>
-                `;
-            });
+                        <button class="btn btn-primary" onclick="importFromSheet()" style="margin-top:10px">🚀 Импортировать</button>
+                    `;
+                } else {
+                    showToast('Ошибка: ' + data.detail, 'error');
+                }
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
         }
 
-        async function startSheetImport() {
-            const url = document.getElementById('sheetUrl').value.trim();
-            const sheet = document.getElementById('sheetSelect').value;
-            const btn = document.getElementById('importSheetsBtn');
-            const output = document.getElementById('statusOutput');
-
-            // Build mapping
-            const mapping = {};
-            let missingRequired = false;
-
-            NEEDED_FIELDS.forEach(field => {
-                const val = document.getElementById(`map_${field.key}`).value;
-                if (val) {
-                    mapping[val] = field.key; // { "Column Name": "internal_key" }
-                } else if (field.required) {
-                    missingRequired = true;
-                }
-            });
-
-            if (missingRequired) {
-                alert('Please map all required fields (*)');
-                return;
-            }
-
-            btn.classList.add('loading');
-            btn.disabled = true;
-            output.className = '';
-            output.innerText = '';
+        async function importFromSheet() {
+            const url = document.getElementById('sheetUrl').value;
+            const sheet = document.getElementById('selectedSheet').value;
 
             try {
                 const res = await fetch('/import/sheets', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        spreadsheet_input: url,
-                        sheet_name: sheet,
-                        column_mapping: mapping
-                    })
+                    body: JSON.stringify({ spreadsheet_input: url, sheet_name: sheet })
                 });
-                const result = await res.json();
-
-                if (res.ok) {
-                    output.className = 'output-success';
-                    output.innerHTML = `✅ <b>Success!</b> Task ID: <br><small>${result.task_id}</small>`;
-                    refreshVacancies();
-                } else {
-                    output.className = 'output-error';
-                    output.innerText = `❌ Error: ${result.detail || JSON.stringify(result)}`;
-                }
+                const data = await res.json();
+                showToast(`Импорт запущен! Task: ${data.task_id}`, 'success');
             } catch (e) {
-                output.className = 'output-error';
-                output.innerText = `❌ Error: ${e.message}`;
-            } finally {
-                btn.classList.remove('loading');
-                btn.disabled = false;
+                showToast('Ошибка: ' + e.message, 'error');
             }
         }
 
-        // Generate a random ID on load
-        document.getElementById('vacancyId').value = 'M' + Math.floor(Math.random() * 900000 + 100000);
+        async function manualImport() {
+            const position = document.getElementById('manualPosition').value;
+            const city = document.getElementById('manualCity').value;
+            const address = document.getElementById('manualAddress').value;
 
-        async function refreshVacancies() {
-            const list = document.getElementById('vacancyList');
-            try {
-                const response = await fetch(`${API_URL}/vacancies?per_page=15`);
-                const data = await response.json();
-
-                if (data.items.length === 0) {
-                    list.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Вакансий пока нет</p>';
-                    return;
-                }
-
-                list.innerHTML = data.items.map(v => `
-                    <div class="vacancy-item">
-                        <div class="vacancy-info">
-                            <h3>${v.position}</h3>
-                            <p>${v.city} · ${v.id}</p>
-                            <p style="font-size: 11px;">${new Date(v.created_at).toLocaleString('ru-RU')}</p>
-                        </div>
-                        <div class="status-badge status-${v.status}">${v.status}</div>
-                    </div>
-                `).join('');
-            } catch (e) {
-                list.innerHTML = `<p style="text-align: center; color: var(--error); padding: 2rem;">Ошибка загрузки: ${e.message}</p>`;
+            if (!position || !city) {
+                return showToast('Заполните обязательные поля', 'error');
             }
-        }
-
-        document.getElementById('importForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            const output = document.getElementById('statusOutput');
-
-            btn.classList.add('loading');
-            btn.disabled = true;
-            output.className = '';
-            output.innerText = '';
 
             const data = [{
-                id: document.getElementById('vacancyId').value,
-                city: document.getElementById('city').value,
-                address: document.getElementById('address').value,
-                position: document.getElementById('position').value,
-                profession: document.getElementById('position').value,
-                schedule: document.getElementById('schedule').value,
-                level: document.getElementById('level').value,
-                salary_min: parseInt(document.getElementById('salaryMin').value) || null,
-                salary_max: parseInt(document.getElementById('salaryMax').value) || null,
-                notes: document.getElementById('notes').value
+                "Должность": position,
+                "Город": city,
+                "Адрес": address,
+                "Актуальность": "Да"
             }];
 
             try {
-                const response = await fetch(`${API_URL}/import/json`, {
+                const res = await fetch('/import/json', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                const result = await response.json();
+                const result = await res.json();
+                showToast(`Импорт запущен! Task: ${result.task_id}`, 'success');
 
-                if (response.ok) {
-                    output.className = 'output-success';
-                    output.innerHTML = `✅ <b>Успех!</b> Задача запущена: <br><small>${result.task_id}</small>`;
+                // Clear form
+                document.getElementById('manualPosition').value = '';
+                document.getElementById('manualCity').value = '';
+                document.getElementById('manualAddress').value = '';
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
 
-                    // Reset ID
-                    document.getElementById('vacancyId').value = 'M' + Math.floor(Math.random() * 900000 + 100000);
-                    refreshVacancies();
-                } else {
-                    console.error('Import Error Details:', result);
-                    output.className = 'output-error';
-                    const errorMsg = typeof result.detail === 'string'
-                        ? result.detail
-                        : JSON.stringify(result.detail, null, 2);
-                    output.innerText = `❌ Ошибка: ${errorMsg}`;
+        // ═══════════════════════════════════════════════════════════════════
+        // COMPANY PROFILE
+        // ═══════════════════════════════════════════════════════════════════
+
+        async function loadProfile() {
+            try {
+                const res = await fetch('/settings/profile');
+                const profile = await res.json();
+
+                document.getElementById('profileManagerName').value = profile.manager_name || '';
+                document.getElementById('profilePhone').value = profile.contact_phone || '';
+                document.getElementById('profileCompanyName').value = profile.company_name || '';
+                document.getElementById('profileEmail').value = profile.email || '';
+
+                // Additional settings
+                if (profile.employment_type) {
+                    document.getElementById('profileEmploymentType').value = profile.employment_type;
                 }
-            } catch (err) {
-                output.className = 'output-error';
-                output.innerText = `❌ Сетевая ошибка: ${err.message}`;
-            } finally {
-                btn.classList.remove('loading');
-                btn.disabled = false;
-            }
-        };
-
-        async function startBatch() {
-            if (!confirm('Запустить обработку всех ожидающих вакансий?')) return;
-            try {
-                const response = await fetch(`${API_URL}/generate/batch`, { method: 'POST' });
-                const result = await response.json();
-                alert(`Задача запущена: ${result.task_id}`);
+                if (profile.job_type) {
+                    document.getElementById('profileJobType').value = profile.job_type;
+                }
+                if (profile.experience) {
+                    document.getElementById('profileExperience').value = profile.experience;
+                }
+                if (profile.pay_period) {
+                    document.getElementById('profilePayPeriod').value = profile.pay_period;
+                }
             } catch (e) {
-                alert(`Ошибка: ${e.message}`);
+                console.error('Failed to load profile:', e);
             }
         }
 
-        async function exportXml() {
+        async function saveProfile() {
+            const updates = {
+                manager_name: document.getElementById('profileManagerName').value,
+                contact_phone: document.getElementById('profilePhone').value,
+                company_name: document.getElementById('profileCompanyName').value,
+                email: document.getElementById('profileEmail').value,
+                employment_type: document.getElementById('profileEmploymentType').value,
+                job_type: document.getElementById('profileJobType').value,
+                experience: document.getElementById('profileExperience').value,
+                pay_period: document.getElementById('profilePayPeriod').value,
+            };
+
             try {
-                const response = await fetch(`${API_URL}/publish/xml`, { method: 'POST' });
-                const result = await response.json();
-                alert(`Экспорт запущен: ${result.task_id}`);
+                const res = await fetch('/settings/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+
+                if (res.ok) {
+                    showToast('Профиль сохранён!', 'success');
+                } else {
+                    showToast('Ошибка сохранения', 'error');
+                }
             } catch (e) {
-                alert(`Ошибка: ${e.message}`);
+                showToast('Ошибка: ' + e.message, 'error');
             }
         }
 
-        // Initial load
-        refreshVacancies();
-        // Auto refresh every 30s
-        setInterval(refreshVacancies, 30000);
+        // ═══════════════════════════════════════════════════════════════════
+        // XML EXPORT
+        // ═══════════════════════════════════════════════════════════════════
+
+        async function exportXML() {
+            try {
+                const res = await fetch('/export/xml', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(null)
+                });
+                const data = await res.json();
+
+                document.getElementById('exportResult').innerHTML = `
+                    <div style="color:var(--success)">
+                        ✅ Экспорт запущен!<br>
+                        Task ID: <code>${data.task_id}</code>
+                    </div>
+                `;
+                showToast('Экспорт XML запущен', 'success');
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // TOAST
+        // ═══════════════════════════════════════════════════════════════════
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════════
+
+        loadStepMode();
+        loadStats();
+        loadProfile();
+        setInterval(loadStats, 30000);
     </script>
 </body>
 

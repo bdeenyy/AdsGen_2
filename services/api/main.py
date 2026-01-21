@@ -42,10 +42,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# CORS middleware - origins from environment variable
+cors_origins = settings.cors_origins.split(",") if settings.cors_origins != "*" else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -325,3 +326,216 @@ async def get_task_status(task_id: str):
         "status": result.status,
         "result": result.result if result.ready() else None,
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ADMIN PANEL ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.get("/stats")
+async def get_stats(session: AsyncSession = Depends(get_session)):
+    """Get vacancy statistics by status."""
+    # Count vacancies by status
+    stats = {}
+    for status in VacancyStatus:
+        count_query = select(func.count()).select_from(Vacancy).where(Vacancy.status == status)
+        result = await session.execute(count_query)
+        stats[status.value] = result.scalar_one()
+    
+    # Get total count
+    total_query = select(func.count()).select_from(Vacancy)
+    total_result = await session.execute(total_query)
+    
+    return {
+        "by_status": stats,
+        "total": total_result.scalar_one(),
+    }
+
+
+@app.put("/vacancies/{vacancy_id}")
+async def update_vacancy(
+    vacancy_id: str,
+    updates: dict = Body(...),
+    session: AsyncSession = Depends(get_session),
+):
+    """Update a vacancy's fields."""
+    result = await session.execute(
+        select(Vacancy).where(Vacancy.id == vacancy_id)
+    )
+    vacancy = result.scalar_one_or_none()
+    
+    if not vacancy:
+        raise HTTPException(status_code=404, detail="Vacancy not found")
+    
+    # Update allowed fields
+    allowed_fields = [
+        "title", "description", "city", "address", "position", "profession",
+        "schedule", "level", "store_type", "service", "notes",
+        "salary_min", "salary_max", "manager_name", "manager_phone",
+        "company_name", "company_email", "image_url"
+    ]
+    
+    for field, value in updates.items():
+        if field in allowed_fields:
+            setattr(vacancy, field, value)
+    
+    await session.commit()
+    await session.refresh(vacancy)
+    
+    return VacancyResponse.from_orm(vacancy)
+
+
+@app.delete("/vacancies/{vacancy_id}")
+async def delete_vacancy(
+    vacancy_id: str,
+    session: AsyncSession = Depends(get_session),
+):
+    """Delete a single vacancy."""
+    result = await session.execute(
+        select(Vacancy).where(Vacancy.id == vacancy_id)
+    )
+    vacancy = result.scalar_one_or_none()
+    
+    if not vacancy:
+        raise HTTPException(status_code=404, detail="Vacancy not found")
+    
+    await session.delete(vacancy)
+    await session.commit()
+    
+    return {"deleted": vacancy_id}
+
+
+@app.delete("/vacancies")
+async def delete_vacancies(
+    ids: list[str] = Body(..., embed=True),
+    session: AsyncSession = Depends(get_session),
+):
+    """Delete multiple vacancies by IDs."""
+    deleted = []
+    for vacancy_id in ids:
+        result = await session.execute(
+            select(Vacancy).where(Vacancy.id == vacancy_id)
+        )
+        vacancy = result.scalar_one_or_none()
+        if vacancy:
+            await session.delete(vacancy)
+            deleted.append(vacancy_id)
+    
+    await session.commit()
+    return {"deleted": deleted, "count": len(deleted)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STEP MODE SETTINGS
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.get("/settings/step-mode")
+async def get_step_mode():
+    """Get current step mode status."""
+    from services.shared.config import get_step_mode
+    return {"step_mode": get_step_mode()}
+
+
+@app.post("/settings/step-mode")
+async def set_step_mode_endpoint(enabled: bool = Body(..., embed=True)):
+    """Enable or disable step mode."""
+    from services.shared.config import set_step_mode
+    success = set_step_mode(enabled)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to update step mode")
+    return {"step_mode": enabled, "updated": True}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# COMPANY PROFILE SETTINGS
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.get("/settings/profile")
+async def get_company_profile():
+    """Get company profile settings."""
+    from services.shared.company_profile import get_profile
+    return get_profile()
+
+
+@app.put("/settings/profile")
+async def update_company_profile(updates: dict = Body(...)):
+    """Update company profile settings."""
+    from services.shared.company_profile import update_profile
+    try:
+        updated = update_profile(updates)
+        return {"success": True, "profile": updated}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# XML EXPORT
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.post("/export/xml")
+async def export_to_xml(
+    vacancy_ids: Optional[list[str]] = Body(None),
+    session: AsyncSession = Depends(get_session),
+):
+    """Export vacancies to Avito XML format."""
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Received export request for {len(vacancy_ids) if vacancy_ids else 'all'} vacancies")
+    
+    from services.shared.celery_app import celery_app
+    task = celery_app.send_task(
+        "services.publisher_worker.tasks.export_to_xml",
+        args=[vacancy_ids],
+        queue="publisher"  # Force correct queue
+    )
+    logger.info(f"Sent export task {task.id} to queue 'publisher'")
+    
+    return TaskResponse(task_id=task.id, status="pending", message="XML export started")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MANUAL WORKER TRIGGERS
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.post("/vacancies/{vacancy_id}/generate-text")
+async def trigger_text_generation(vacancy_id: str):
+    """Manually trigger text generation for a vacancy."""
+    from services.shared.celery_app import celery_app
+    task = celery_app.send_task(
+        "services.textgen_worker.tasks.generate_vacancy_text",
+        args=[vacancy_id]
+    )
+    return TaskResponse(task_id=task.id, status="pending", message=f"Text generation started for {vacancy_id}")
+
+
+@app.post("/vacancies/{vacancy_id}/generate-image")
+async def trigger_image_generation(vacancy_id: str):
+    """Manually trigger image generation for a vacancy."""
+    from services.shared.celery_app import celery_app
+    task = celery_app.send_task(
+        "services.imagegen_worker.tasks.generate_vacancy_image",
+        args=[vacancy_id]
+    )
+    return TaskResponse(task_id=task.id, status="pending", message=f"Image generation started for {vacancy_id}")
+
+
+@app.post("/vacancies/{vacancy_id}/validate")
+async def trigger_validation(vacancy_id: str):
+    """Manually trigger validation for a vacancy."""
+    from services.shared.celery_app import celery_app
+    task = celery_app.send_task(
+        "services.validation_worker.tasks.validate_vacancy_content",
+        args=[vacancy_id]
+    )
+    return TaskResponse(task_id=task.id, status="pending", message=f"Validation started for {vacancy_id}")
+
+
+@app.post("/vacancies/{vacancy_id}/publish")
+async def trigger_publish(vacancy_id: str):
+    """Manually trigger publishing for a vacancy."""
+    from services.shared.celery_app import celery_app
+    task = celery_app.send_task(
+        "services.publisher_worker.tasks.publish_vacancy",
+        args=[vacancy_id]
+    )
+    return TaskResponse(task_id=task.id, status="pending", message=f"Publish started for {vacancy_id}")

@@ -9,10 +9,11 @@ from typing import Optional, List
 
 import pandas as pd
 from celery import shared_task
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.shared.config import get_settings
+from services.shared.database import get_sync_engine
 from services.shared.mappings import (
     ALLOWED_CITIES,
     generate_vacancy_id,
@@ -26,10 +27,8 @@ from services.shared.utils import GoogleSheetsService
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# Sync engine for Celery tasks
-sync_engine = create_engine(
-    settings.database_url.replace("+asyncpg", "").replace("postgresql+asyncpg", "postgresql+psycopg2")
-)
+# Sync engine from shared module
+sync_engine = get_sync_engine()
 
 
 # ═══════════════════════════════════════════════════════════════════════════

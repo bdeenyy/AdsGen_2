@@ -9,19 +9,18 @@ from typing import Optional
 
 import httpx
 from celery import shared_task
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from services.shared.config import get_settings
+from services.shared.database import get_sync_engine
 from services.shared.models.vacancy import Vacancy, VacancyStatus
 from services.shared.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-sync_engine = create_engine(
-    settings.database_url.replace("+asyncpg", "").replace("postgresql+asyncpg", "postgresql+psycopg2")
-)
+# Sync engine from shared module
+sync_engine = get_sync_engine()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -128,11 +127,14 @@ def validate_vacancy_content(self, vacancy_id: str) -> dict:
                 vacancy.error_message = None
                 session.commit()
                 
-                # Trigger publishing
-                from services.publisher_worker.tasks import publish_vacancy
-                publish_vacancy.delay(vacancy_id)
-                
-                logger.info(f"Validation passed for {vacancy_id}")
+                # Trigger publishing (unless in step mode)
+                from services.shared.config import is_step_mode_enabled
+                if not is_step_mode_enabled():
+                    from services.publisher_worker.tasks import publish_vacancy
+                    publish_vacancy.delay(vacancy_id)
+                    logger.info(f"Validation passed, triggering publish for {vacancy_id}")
+                else:
+                    logger.info(f"Validation passed for {vacancy_id} (step mode - stopping here)")
                 
                 return {
                     "vacancy_id": vacancy_id,
@@ -230,18 +232,34 @@ def _validate_image(image_url: Optional[str]) -> list[str]:
         errors.append("Invalid image URL format")
         return errors
     
+    # Skip content-type check for known image hosting services
+    # (they may return HTML preview pages instead of direct image)
+    trusted_hosts = [
+        "disk.yandex.ru",
+        "yadi.sk",
+        "downloader.disk.yandex.ru",
+        "avito.ru",
+    ]
+    
+    is_trusted = any(host in image_url for host in trusted_hosts)
+    
     # Check image accessibility (HEAD request)
     try:
         with httpx.Client(timeout=10.0) as client:
             response = client.head(image_url, follow_redirects=True)
             
             if response.status_code != 200:
-                errors.append(f"Image not accessible (HTTP {response.status_code})")
+                # For trusted hosts, 302/303 redirects are OK
+                if is_trusted and response.status_code in [301, 302, 303, 307, 308]:
+                    pass  # OK, redirect is expected
+                else:
+                    errors.append(f"Image not accessible (HTTP {response.status_code})")
             else:
-                # Check content type
-                content_type = response.headers.get("content-type", "")
-                if not content_type.startswith("image/"):
-                    errors.append(f"URL does not point to an image: {content_type}")
+                # Check content type only for untrusted sources
+                if not is_trusted:
+                    content_type = response.headers.get("content-type", "")
+                    if not content_type.startswith("image/"):
+                        errors.append(f"URL does not point to an image: {content_type}")
                     
     except httpx.TimeoutException:
         errors.append("Image URL timed out")

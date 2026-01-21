@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     # Application
     debug: bool = False
     
+    # CORS (comma-separated list of allowed origins, or "*" for all)
+    cors_origins: str = "http://localhost:3000,http://localhost:8000"
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
@@ -48,3 +51,40 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STEP MODE CONTROL (stored in Redis for dynamic updates)
+# ═══════════════════════════════════════════════════════════════════════════
+
+_STEP_MODE_KEY = "adsgen:step_mode"
+
+
+def is_step_mode_enabled() -> bool:
+    """
+    Check if step mode is enabled.
+    In step mode, workers don't automatically trigger the next worker.
+    """
+    import redis
+    try:
+        r = redis.from_url(get_settings().redis_url)
+        value = r.get(_STEP_MODE_KEY)
+        return value == b"1" or value == b"true"
+    except Exception:
+        return False  # Default to auto mode if Redis unavailable
+
+
+def set_step_mode(enabled: bool) -> bool:
+    """Enable or disable step mode."""
+    import redis
+    try:
+        r = redis.from_url(get_settings().redis_url)
+        r.set(_STEP_MODE_KEY, "1" if enabled else "0")
+        return True
+    except Exception:
+        return False
+
+
+def get_step_mode() -> bool:
+    """Get current step mode status."""
+    return is_step_mode_enabled()

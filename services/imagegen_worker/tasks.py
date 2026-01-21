@@ -11,19 +11,18 @@ from typing import Optional
 
 import httpx
 from celery import shared_task
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from services.shared.config import get_settings
+from services.shared.database import get_sync_engine
 from services.shared.models.vacancy import Vacancy, VacancyStatus
 from services.shared.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-sync_engine = create_engine(
-    settings.database_url.replace("+asyncpg", "").replace("postgresql+asyncpg", "postgresql+psycopg2")
-)
+# Sync engine from shared module
+sync_engine = get_sync_engine()
 
 # Default fallback image
 FALLBACK_IMAGE = "https://www.avito.ru/static/images/profile/default_profile_140x140.png"
@@ -94,11 +93,14 @@ def generate_vacancy_image(
             
             session.commit()
             
-            # Trigger validation
-            from services.validation_worker.tasks import validate_vacancy_content
-            validate_vacancy_content.delay(vacancy_id)
-            
-            logger.info(f"Image generated for {vacancy_id}: {vacancy.image_url}")
+            # Trigger validation (unless in step mode)
+            from services.shared.config import is_step_mode_enabled
+            if not is_step_mode_enabled():
+                from services.validation_worker.tasks import validate_vacancy_content
+                validate_vacancy_content.delay(vacancy_id)
+                logger.info(f"Image generated, triggering validation for {vacancy_id}")
+            else:
+                logger.info(f"Image generated for {vacancy_id} (step mode - stopping here)")
             
             return {
                 "vacancy_id": vacancy_id,

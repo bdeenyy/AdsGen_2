@@ -3,6 +3,9 @@ AdsGen 2.0 - Database Connection Module
 Async SQLAlchemy setup with PostgreSQL
 """
 
+from functools import lru_cache
+
+from sqlalchemy import create_engine, Engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
@@ -10,6 +13,25 @@ from .config import get_settings
 
 
 settings = get_settings()
+
+
+@lru_cache
+def get_sync_engine() -> Engine:
+    """
+    Get sync engine for Celery workers.
+    Cached to avoid creating multiple engine instances.
+    """
+    sync_url = settings.database_url.replace(
+        "+asyncpg", ""
+    ).replace(
+        "postgresql+asyncpg", "postgresql+psycopg2"
+    )
+    return create_engine(
+        sync_url,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+    )
 
 # Create async engine
 engine = create_async_engine(
