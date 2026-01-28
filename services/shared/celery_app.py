@@ -46,6 +46,14 @@ celery_app.conf.update(
     # Worker settings
     worker_prefetch_multiplier=1,
     worker_concurrency=4,
+    
+    # Celery Beat schedule (periodic tasks)
+    beat_schedule={
+        "sync-all-sources-hourly": {
+            "task": "services.import_worker.tasks.sync_all_active_sources",
+            "schedule": 3600.0,  # Every hour (in seconds)
+        },
+    },
 )
 
 # Auto-discover tasks from worker modules

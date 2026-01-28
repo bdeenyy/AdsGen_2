@@ -69,3 +69,6 @@ credentials.json
 legacy/
 Для Comfy UI/
 Справочные_материалы/
+GEMINI.md
+.agent
+migrations

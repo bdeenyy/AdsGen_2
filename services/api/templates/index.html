@@ -54,10 +54,13 @@
 
         .logo {
             font-size: 24px;
-            font-weight: 700;
-            background: linear-gradient(to right, #818cf8, #c084fc);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
+            color: transparent;
+            /* Fallback */
         }
 
         .nav-tabs {
@@ -131,6 +134,52 @@
 
         .toggle.active::after {
             left: 22px;
+        }
+
+        /* Toggle Switch (checkbox-based) */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--border);
+            transition: 0.3s;
+            border-radius: 22px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked+.toggle-slider {
+            background: var(--success);
+        }
+
+        .toggle-switch input:checked+.toggle-slider:before {
+            transform: translateX(18px);
         }
 
         /* ═══════════════════════════════════════════════════════════════════ */
@@ -613,6 +662,25 @@
                 </div>
             </div>
 
+            <!-- Batch Processing Controls -->
+            <div class="panel" style="margin-bottom: 2rem">
+                <div class="panel-header">
+                    <h2 class="panel-title">🚀 Массовая обработка</h2>
+                </div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="startBatchProcessing('PENDING', 100)">
+                        📝 Генерировать тексты (PENDING)
+                    </button>
+                    <button class="btn btn-primary" onclick="startBatchProcessing('TEXT_GENERATED', 100)">
+                        🖼️ Генерировать картинки (TEXT_GENERATED)
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadStats()">
+                        🔄 Обновить статистику
+                    </button>
+                </div>
+                <div id="batchResult" style="margin-top: 1rem; font-size: 13px; color: var(--text-muted)"></div>
+            </div>
+
             <div class="panel">
                 <div class="panel-header">
                     <h2 class="panel-title">Последние вакансии</h2>
@@ -667,6 +735,17 @@
 
         <!-- Import Tab -->
         <div id="import" class="tab-content">
+            <!-- Saved Sources Section -->
+            <div class="panel" style="margin-bottom: 2rem;">
+                <div class="panel-header">
+                    <h2 class="panel-title">📂 Сохранённые источники</h2>
+                    <button class="action-btn" onclick="loadSources()">🔄 Обновить</button>
+                </div>
+                <div id="sourcesList">
+                    <p style="color:var(--text-muted)">Загрузка...</p>
+                </div>
+            </div>
+
             <div class="import-section">
                 <div class="import-card">
                     <h3>📊 Google Sheets Import</h3>
@@ -844,6 +923,84 @@
         </div>
     </div>
 
+    <!-- Modal for schedule settings -->
+    <div class="modal-overlay" id="scheduleModal" style="display:none">
+        <div class="modal" style="max-width:450px">
+            <div class="modal-header">
+                <h2 class="modal-title">⏰ Расписание синхронизации</h2>
+                <button class="modal-close" onclick="closeScheduleModal()">&times;</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Тип расписания</label>
+                    <select class="filter-input" id="scheduleType" onchange="toggleDaysSelector()">
+                        <option value="daily">Ежедневно</option>
+                        <option value="weekly">По дням недели</option>
+                    </select>
+                </div>
+                <div class="form-group full">
+                    <label>Время запуска</label>
+                    <select class="filter-input" id="scheduleHour">
+                        <option value="0">00:00</option>
+                        <option value="1">01:00</option>
+                        <option value="2">02:00</option>
+                        <option value="3">03:00</option>
+                        <option value="4">04:00</option>
+                        <option value="5">05:00</option>
+                        <option value="6">06:00</option>
+                        <option value="7">07:00</option>
+                        <option value="8">08:00</option>
+                        <option value="9" selected>09:00</option>
+                        <option value="10">10:00</option>
+                        <option value="11">11:00</option>
+                        <option value="12">12:00</option>
+                        <option value="13">13:00</option>
+                        <option value="14">14:00</option>
+                        <option value="15">15:00</option>
+                        <option value="16">16:00</option>
+                        <option value="17">17:00</option>
+                        <option value="18">18:00</option>
+                        <option value="19">19:00</option>
+                        <option value="20">20:00</option>
+                        <option value="21">21:00</option>
+                        <option value="22">22:00</option>
+                        <option value="23">23:00</option>
+                    </select>
+                </div>
+                <div class="form-group full" id="daysSelector" style="display:none">
+                    <label>Дни недели</label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                            <input type="checkbox" value="1" class="day-checkbox" checked> Пн
+                        </label>
+                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                            <input type="checkbox" value="2" class="day-checkbox" checked> Вт
+                        </label>
+                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                            <input type="checkbox" value="3" class="day-checkbox" checked> Ср
+                        </label>
+                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                            <input type="checkbox" value="4" class="day-checkbox" checked> Чт
+                        </label>
+                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                            <input type="checkbox" value="5" class="day-checkbox" checked> Пт
+                        </label>
+                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                            <input type="checkbox" value="6" class="day-checkbox"> Сб
+                        </label>
+                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                            <input type="checkbox" value="7" class="day-checkbox"> Вс
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeScheduleModal()">Отмена</button>
+                <button class="btn btn-primary" onclick="saveSchedule()">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentVacancyId = null;
         let currentPage = 1;
@@ -901,6 +1058,31 @@
                     showToast('Step Mode выключен — автоматическая обработка', 'info');
                 }
             } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // BATCH PROCESSING
+        // ═══════════════════════════════════════════════════════════════════
+
+        async function startBatchProcessing(statusFilter, limit = 100) {
+            const resultDiv = document.getElementById('batchResult');
+            resultDiv.innerHTML = '⏳ Запуск обработки...';
+
+            try {
+                const res = await fetch(`/generate/batch?status_filter=${statusFilter}&limit=${limit}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+
+                resultDiv.innerHTML = `✅ Задача запущена. ID: <small>${data.task_id}</small>`;
+                showToast(`Запущена фоновая обработка (${statusFilter})`, 'success');
+
+                // Refresh stats after a delay
+                setTimeout(loadStats, 2000);
+            } catch (e) {
+                resultDiv.innerHTML = `❌ Ошибка: ${e.message}`;
                 showToast('Ошибка: ' + e.message, 'error');
             }
         }
@@ -1130,11 +1312,28 @@
 
                 if (data.sheets) {
                     document.getElementById('sheetOptions').innerHTML = `
-                        <select id="selectedSheet" class="filter-input">
-                            ${data.sheets.map(s => `<option>${s}</option>`).join('')}
-                        </select>
+                        <div class="form-group">
+                            <label>Выберите лист</label>
+                            <select id="selectedSheet" class="filter-input">
+                                ${data.sheets.map(s => `<option>${s}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:10px">
+                            <input type="checkbox" id="saveAsSource" style="width:18px;height:18px">
+                            <label for="saveAsSource" style="margin:0;cursor:pointer">💾 Сохранить как источник</label>
+                        </div>
+                        <div id="sourceNameField" style="display:none;margin-top:10px">
+                            <div class="form-group">
+                                <label>Название источника</label>
+                                <input type="text" id="sourceName" placeholder="Например: Вакансии Москва">
+                            </div>
+                        </div>
                         <button class="btn btn-primary" onclick="importFromSheet()" style="margin-top:10px">🚀 Импортировать</button>
                     `;
+                    // Toggle source name field
+                    document.getElementById('saveAsSource').addEventListener('change', function () {
+                        document.getElementById('sourceNameField').style.display = this.checked ? 'block' : 'none';
+                    });
                 } else {
                     showToast('Ошибка: ' + data.detail, 'error');
                 }
@@ -1146,8 +1345,28 @@
         async function importFromSheet() {
             const url = document.getElementById('sheetUrl').value;
             const sheet = document.getElementById('selectedSheet').value;
+            const saveAsSourceCheckbox = document.getElementById('saveAsSource');
+            const saveAsSource = saveAsSourceCheckbox ? saveAsSourceCheckbox.checked : false;
+            const sourceName = document.getElementById('sourceName')?.value || '';
+
+            // If saving as source, validate name
+            if (saveAsSource && !sourceName.trim()) {
+                return showToast('Введите название источника', 'error');
+            }
 
             try {
+                // Save as source if checked
+                if (saveAsSource) {
+                    await fetch('/import/sources', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: sourceName.trim(), url: url, sheet_name: sheet })
+                    });
+                    showToast('Источник сохранён!', 'success');
+                    loadSources();
+                }
+
+                // Run import
                 const res = await fetch('/import/sheets', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1294,12 +1513,196 @@
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // INIT
+        // IMPORT SOURCES
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let currentSourceId = null;
+
+        async function loadSources() {
+            try {
+                const res = await fetch('/import/sources');
+                const data = await res.json();
+                const container = document.getElementById('sourcesList');
+
+                if (!data.sources || data.sources.length === 0) {
+                    container.innerHTML = '<p style="color:var(--text-muted)">Нет сохранённых источников. Добавьте Google Таблицу выше.</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Лист</th>
+                                <th>Авто-синхр.</th>
+                                <th>Расписание</th>
+                                <th>Последний импорт</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.sources.map(s => {
+                    const days = ['', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+                    const scheduleText = s.sync_schedule_type === 'daily'
+                        ? `Ежедневно в ${s.sync_hour || 9}:00`
+                        : `${(s.sync_days || [1, 2, 3, 4, 5]).map(d => days[d]).join(', ')} в ${s.sync_hour || 9}:00`;
+                    return `
+                                <tr>
+                                    <td><strong>${s.name}</strong></td>
+                                    <td>${s.sheet_name || '-'}</td>
+                                    <td>
+                                        <label class="toggle-switch" style="margin:0">
+                                            <input type="checkbox" ${s.sync_enabled ? 'checked' : ''} 
+                                                onchange="toggleSync('${s.id}', this.checked)">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <span style="font-size:12px;color:var(--text-muted)">${scheduleText}</span>
+                                        <button class="action-btn" onclick="openScheduleModal('${s.id}', '${s.sync_schedule_type || 'daily'}', ${s.sync_hour || 9}, '${(s.sync_days || [1, 2, 3, 4, 5]).join(',')}')" title="Настроить">⚙️</button>
+                                    </td>
+                                    <td>${s.last_imported_at ? new Date(s.last_imported_at).toLocaleString('ru') : 'Никогда'}</td>
+                                    <td>
+                                        ${s.last_sync_status === 'success' ? '<span style="color:var(--success)">✅</span>' :
+                            s.last_sync_status === 'error' ? '<span style="color:var(--error)" title="' + (s.last_sync_error || '') + '">❌</span>' :
+                                '<span style="color:var(--text-muted)">—</span>'}
+                                    </td>
+                                    <td>
+                                        <button class="action-btn primary" onclick="runSourceImport('${s.id}')" title="Синхронизировать">🔄</button>
+                                        <button class="action-btn" onclick="editSource('${s.id}')" title="Редактировать">✏️</button>
+                                        <button class="action-btn danger" onclick="deleteSource('${s.id}')" title="Удалить">🗑️</button>
+                                    </td>
+                                </tr>
+                            `}).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (e) {
+                document.getElementById('sourcesList').innerHTML = '<p style="color:var(--error)">Ошибка загрузки источников</p>';
+            }
+        }
+
+        async function runSourceImport(sourceId) {
+            try {
+                const res = await fetch(`/import/sources/${sourceId}/run`, { method: 'POST' });
+                const data = await res.json();
+                showToast(`Импорт запущен! Task: ${data.task_id}`, 'success');
+                setTimeout(loadSources, 1000);
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function editSource(sourceId) {
+            currentSourceId = sourceId;
+            const newName = prompt('Введите новое название источника:');
+            if (newName && newName.trim()) {
+                try {
+                    await fetch(`/import/sources/${sourceId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: newName.trim() })
+                    });
+                    showToast('Источник обновлён!', 'success');
+                    loadSources();
+                } catch (e) {
+                    showToast('Ошибка: ' + e.message, 'error');
+                }
+            }
+        }
+
+        async function deleteSource(sourceId) {
+            if (!confirm('Удалить этот источник?')) return;
+            try {
+                await fetch(`/import/sources/${sourceId}`, { method: 'DELETE' });
+                showToast('Источник удалён', 'success');
+                loadSources();
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function toggleSync(sourceId, enabled) {
+            try {
+                await fetch(`/import/sources/${sourceId}/sync-settings?sync_enabled=${enabled}`, {
+                    method: 'PUT'
+                });
+                showToast(enabled ? 'Авто-синхронизация включена' : 'Авто-синхронизация выключена', 'success');
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+                loadSources(); // Reload to reset toggle state
+            }
+        }
+
         // ═══════════════════════════════════════════════════════════════════
+        // SCHEDULE MODAL
+        // ═══════════════════════════════════════════════════════════════════
+
+        let scheduleSourceId = null;
+
+        function openScheduleModal(sourceId, scheduleType, hour, daysStr) {
+            scheduleSourceId = sourceId;
+
+            // Set schedule type
+            document.getElementById('scheduleType').value = scheduleType || 'daily';
+
+            // Set hour
+            document.getElementById('scheduleHour').value = hour || 9;
+
+            // Set days
+            const days = daysStr ? daysStr.split(',').map(d => parseInt(d)) : [1, 2, 3, 4, 5];
+            document.querySelectorAll('.day-checkbox').forEach(cb => {
+                cb.checked = days.includes(parseInt(cb.value));
+            });
+
+            // Toggle days selector visibility
+            toggleDaysSelector();
+
+            // Show modal
+            document.getElementById('scheduleModal').style.display = 'flex';
+        }
+
+        function closeScheduleModal() {
+            document.getElementById('scheduleModal').style.display = 'none';
+            scheduleSourceId = null;
+        }
+
+        function toggleDaysSelector() {
+            const type = document.getElementById('scheduleType').value;
+            document.getElementById('daysSelector').style.display = type === 'weekly' ? 'block' : 'none';
+        }
+
+        async function saveSchedule() {
+            if (!scheduleSourceId) return;
+
+            const scheduleType = document.getElementById('scheduleType').value;
+            const hour = document.getElementById('scheduleHour').value;
+            const days = Array.from(document.querySelectorAll('.day-checkbox:checked'))
+                .map(cb => cb.value)
+                .join(',');
+
+            try {
+                await fetch(`/import/sources/${scheduleSourceId}/sync-settings?sync_schedule_type=${scheduleType}&sync_hour=${hour}&sync_days=${days}`, {
+                    method: 'PUT'
+                });
+                showToast('Расписание сохранено!', 'success');
+                closeScheduleModal();
+                loadSources();
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════════════
 
         loadStepMode();
         loadStats();
         loadProfile();
+        loadSources();
         setInterval(loadStats, 30000);
     </script>
 </body>

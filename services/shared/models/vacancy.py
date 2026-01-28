@@ -15,16 +15,17 @@ from ..database import Base
 
 class VacancyStatus(str, enum.Enum):
     """Status of vacancy processing pipeline."""
-    PENDING = "pending"
-    TEXT_GENERATING = "text_generating"
-    TEXT_GENERATED = "text_generated"
-    IMAGE_GENERATING = "image_generating"
-    IMAGE_GENERATED = "image_generated"
-    VALIDATING = "validating"
-    VALIDATED = "validated"
-    PUBLISHING = "publishing"
-    PUBLISHED = "published"
-    ERROR = "error"
+    PENDING = "PENDING"
+    TEXT_GENERATING = "TEXT_GENERATING"
+    TEXT_GENERATED = "TEXT_GENERATED"
+    IMAGE_GENERATING = "IMAGE_GENERATING"
+    IMAGE_GENERATED = "IMAGE_GENERATED"
+    VALIDATING = "VALIDATING"
+    VALIDATED = "VALIDATED"
+    PUBLISHING = "PUBLISHING"
+    PUBLISHED = "PUBLISHED"
+    ARCHIVED = "ARCHIVED"  # Неактуальная вакансия (удалена из источника)
+    ERROR = "ERROR"
 
 
 class Vacancy(Base):
@@ -47,6 +48,10 @@ class Vacancy(Base):
     store_type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # ГМ/МФ
     service: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)  # Услуга
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Примечания
+    
+    # Deduplication fields
+    source_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True)  # ImportSource.id
+    source_row_hash: Mapped[Optional[str]] = mapped_column(String(32), nullable=True, index=True)  # MD5 hash
     
     # Salary
     salary_min: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)

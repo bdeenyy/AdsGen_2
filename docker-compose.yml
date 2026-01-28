@@ -212,5 +212,25 @@ services:
       redis:
         condition: service_healthy
 
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CELERY BEAT (Scheduler)
+  # ═══════════════════════════════════════════════════════════════════════════
+  
+  celery-beat:
+    build:
+      context: .
+      dockerfile: services/import_worker/Dockerfile
+    container_name: adsgen_celery_beat
+    command: celery -A services.import_worker.tasks beat -l info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-adsgen}:${POSTGRES_PASSWORD:-adsgen_secret}@postgres:5432/${POSTGRES_DB:-adsgen}
+      - REDIS_URL=redis://redis:6379/0
+      - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
+    volumes:
+      - ./services:/app/services
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:

@@ -539,3 +539,118 @@ async def trigger_publish(vacancy_id: str):
         args=[vacancy_id]
     )
     return TaskResponse(task_id=task.id, status="pending", message=f"Publish started for {vacancy_id}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# IMPORT SOURCES MANAGEMENT
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.get("/import/sources")
+async def get_import_sources():
+    """Get all saved import sources."""
+    from services.shared.import_sources import get_all_sources
+    sources = get_all_sources()
+    return {"sources": [s.dict() for s in sources]}
+
+
+@app.post("/import/sources")
+async def create_import_source(
+    name: str = Body(...),
+    url: str = Body(...),
+    sheet_name: str = Body(...),
+    column_mapping: Optional[dict] = Body(None),
+):
+    """Create a new import source."""
+    from services.shared.import_sources import add_source, ImportSource
+    
+    source = ImportSource(
+        name=name,
+        url=url,
+        sheet_name=sheet_name,
+        column_mapping=column_mapping or {},
+    )
+    created = add_source(source)
+    return {"success": True, "source": created.dict()}
+
+
+@app.put("/import/sources/{source_id}")
+async def update_import_source(
+    source_id: str,
+    updates: dict = Body(...),
+):
+    """Update an existing import source."""
+    from services.shared.import_sources import update_source
+    
+    updated = update_source(source_id, updates)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Source not found")
+    return {"success": True, "source": updated.dict()}
+
+
+@app.delete("/import/sources/{source_id}")
+async def delete_import_source(source_id: str):
+    """Delete an import source."""
+    from services.shared.import_sources import delete_source
+    
+    deleted = delete_source(source_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Source not found")
+    return {"success": True, "deleted": source_id}
+
+
+@app.post("/import/sources/{source_id}/run")
+async def run_import_from_source(source_id: str):
+    """Run import from a saved source (with deduplication)."""
+    from services.shared.import_sources import get_source
+    from services.shared.celery_app import celery_app
+    
+    source = get_source(source_id)
+    if not source:
+        raise HTTPException(status_code=404, detail="Source not found")
+    
+    # Trigger sync task (handles deduplication and archiving)
+    task = celery_app.send_task(
+        "services.import_worker.tasks.sync_source",
+        args=[source_id]
+    )
+    
+    return TaskResponse(
+        task_id=task.id,
+        status="pending",
+        message=f"Sync started for source: {source.name}",
+    )
+
+
+@app.put("/import/sources/{source_id}/sync-settings")
+async def update_source_sync_settings(
+    source_id: str, 
+    sync_enabled: bool = None, 
+    sync_schedule_type: str = None,  # "daily" or "weekly"
+    sync_hour: int = None,           # 0-23
+    sync_days: str = None            # comma-separated: "1,2,3,4,5"
+):
+    """Update sync settings for a source."""
+    from services.shared.import_sources import get_source, update_source
+    
+    source = get_source(source_id)
+    if not source:
+        raise HTTPException(status_code=404, detail="Source not found")
+    
+    updates = {}
+    if sync_enabled is not None:
+        updates["sync_enabled"] = sync_enabled
+    if sync_schedule_type is not None:
+        updates["sync_schedule_type"] = sync_schedule_type
+    if sync_hour is not None:
+        updates["sync_hour"] = max(0, min(23, sync_hour))  # Clamp to 0-23
+    if sync_days is not None:
+        # Parse comma-separated days string to list of ints
+        updates["sync_days"] = [int(d.strip()) for d in sync_days.split(",") if d.strip().isdigit()]
+    
+    if updates:
+        updated = update_source(source_id, updates)
+        return {"success": True, "source": updated.dict()}
+    
+    return {"success": True, "source": source.dict()}
+
+
