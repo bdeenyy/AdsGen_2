@@ -59,6 +59,28 @@ def export_to_xml(vacancy_ids: Optional[list[str]] = None) -> dict:
     """
     Export vacancies to Avito XML format and upload to Yandex Disk.
     """
+    # Check schedule if this is an automated run (no manual IDs provided)
+    if not vacancy_ids:
+        from services.shared.company_profile import get_profile
+        profile = get_profile()
+        schedule = profile.get("publication_schedule", {})
+        
+        if schedule.get("enabled"):
+            now = datetime.now()
+            current_hour = now.hour
+            current_day = now.weekday()
+            
+            # Check day
+            if current_day not in schedule.get("days", []):
+                logger.info(f"Skipping export: Today (day {current_day}) is not in schedule")
+                return {"skipped": True, "reason": "schedule_day_mismatch"}
+            
+            # Check hour (allow run within the hour window)
+            # We assume the task runs frequently (e.g. every 30 mins)
+            if current_hour not in schedule.get("hours", []):
+                logger.info(f"Skipping export: Current hour {current_hour} is not in schedule")
+                return {"skipped": True, "reason": "schedule_hour_mismatch"}
+
     logger.info("Starting XML export")
     
     with Session(sync_engine) as session:
@@ -66,10 +88,12 @@ def export_to_xml(vacancy_ids: Optional[list[str]] = None) -> dict:
         if vacancy_ids:
             stmt = select(Vacancy).where(Vacancy.id.in_(vacancy_ids))
         else:
-            # Export all validated/published vacancies
+            # Export only PUBLISHED vacancies
             stmt = select(Vacancy).where(
-                Vacancy.status.in_([VacancyStatus.VALIDATED, VacancyStatus.PUBLISHED])
-            ).where(Vacancy.xml_exported == False)
+                Vacancy.status == VacancyStatus.PUBLISHED
+            )
+            # Remove xml_exported check to always regenerate full feed
+            # .where(Vacancy.xml_exported == False)
         
         vacancies = session.execute(stmt).scalars().all()
         
@@ -81,7 +105,8 @@ def export_to_xml(vacancy_ids: Optional[list[str]] = None) -> dict:
         xml_content = _build_xml(vacancies)
         
         # Generate filename
-        filename = f"Работа-Вакансии-{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
+        # Standard filename as requested
+        filename = "Работа-Вакансии.xml"
         
         # Upload to Yandex Disk
         yandex_url = None

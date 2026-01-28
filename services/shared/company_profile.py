@@ -46,6 +46,12 @@ DEFAULT_PROFILE = {
     # Default working days
     "working_days_per_week": ["3–4 дня", "5 дней", "6–7 дней"],
     "working_hours_per_day": ["8 часов", "9–10 часов", "11–12 часов"],
+    # Auto-publication schedule
+    "publication_schedule": {
+        "enabled": False,
+        "days": [0, 1, 2, 3, 4],  # Mon-Fri (0=Mon, 6=Sun)
+        "hours": [9, 12, 15, 18],  # Run at these hours
+    },
 }
 
 

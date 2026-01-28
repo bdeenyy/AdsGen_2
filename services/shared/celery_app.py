@@ -51,7 +51,11 @@ celery_app.conf.update(
     beat_schedule={
         "sync-all-sources-hourly": {
             "task": "services.import_worker.tasks.sync_all_active_sources",
-            "schedule": 3600.0,  # Every hour (in seconds)
+            "schedule": 3600.0,  # Every hour
+        },
+        "publisher-auto-export": {
+            "task": "services.publisher_worker.tasks.export_to_xml",
+            "schedule": 1800.0,  # Every 30 minutes
         },
     },
 )
